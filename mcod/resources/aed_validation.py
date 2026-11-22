@@ -1,0 +1,352 @@
+"""
+Walidacje wykazu defibrylatorów AED i sklejanie wykazów w raport zbiorczy.
+
+Wykaz DGA sprawdza tylko, czy zasób ma wymagane kolumny i niepuste wartości.
+Dla AED to za mało: błędny punkt na mapie prowadzi ratownika w złe miejsce.
+Dlatego każdy wiersz przechodzi własne walidacje AED:
+
+* wymagane kolumny wzorca (zasób bez nich jest pomijany w całości),
+* identyfikator, nazwa miejsca, miejscowość i współrzędne są wypełnione,
+* współrzędne są liczbami WGS84 i leżą w Polsce; zamienione szerokość
+  i długość są rozpoznawane i zgłaszane wprost,
+* TAK/NIE, daty rrrr-mm-dd, kod pocztowy 00-000, godziny w dniach tygodnia,
+  położenie (wewnątrz / na zewnątrz),
+* identyfikator urządzenia jest unikalny w wykazie dostawcy,
+* spójność: urządzenie „dostępne 24h” nie może mieć dnia „nieczynne”.
+
+Wiersz z błędem nie trafia do raportu zbiorczego, a dostawca dostaje listę
+powodów. Ostrzeżenia (np. elektrody tracące ważność w ciągu 90 dni, możliwy
+duplikat u innego dostawcy) nie blokują wiersza.
+
+Moduł nie zależy od Django: działa na samym pandas.
+"""
+
+import datetime
+import math
+import re
+from dataclasses import dataclass, field
+from typing import Iterable, List, Optional, Sequence, Tuple
+
+import pandas as pd
+
+from mcod.resources.aed_constants import (
+    AED_COLUMNS,
+    AED_DATE_COLUMNS,
+    AED_DUPLICATE_DISTANCE_METERS,
+    AED_EMPTY_VALUE,
+    AED_EXPIRY_WARNING_DAYS,
+    AED_HOURS_SPECIAL_VALUES,
+    AED_LOCATION_VALUES,
+    AED_POLAND_LATITUDE,
+    AED_POLAND_LONGITUDE,
+    AED_REQUIRED_VALUE_COLUMNS,
+    AED_WEEKDAY_COLUMNS,
+    AED_YES_NO_COLUMNS,
+    AED_YES_NO_VALUES,
+    MAIN_AED_COLUMNS,
+    MAIN_AED_DUPLICATE_COLUMN,
+    MAIN_AED_PROVIDER_COLUMN,
+    MAIN_AED_PROVIDER_REGON_COLUMN,
+    MAIN_AED_WARNINGS_COLUMN,
+)
+
+POSTAL_CODE_RE = re.compile(r"^\d{2}-\d{3}$")
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+HOURS_RANGE_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-4]):[0-5]\d$")
+
+
+class MainAEDMissingRequiredColumnError(Exception):
+    """Zasób nie ma kolumn wzorcowego zakresu danych AED."""
+
+    def __init__(self, column_names: Sequence[str]):
+        self.column_names = list(column_names)
+        super().__init__(f"Brak wymaganych kolumn: {', '.join(self.column_names)}")
+
+
+@dataclass
+class AEDRowIssue:
+    row_number: int  # numer wiersza w pliku dostawcy (nagłówek to wiersz 1)
+    device_id: str
+    reasons: List[str]
+
+
+@dataclass
+class AEDValidationResult:
+    accepted: pd.DataFrame
+    rejected: List[AEDRowIssue] = field(default_factory=list)
+    warnings: List[AEDRowIssue] = field(default_factory=list)
+
+    @property
+    def accepted_count(self) -> int:
+        return len(self.accepted)
+
+    @property
+    def rejected_count(self) -> int:
+        return len(self.rejected)
+
+    def summary(self) -> str:
+        lines = [f"Przyjęte: {self.accepted_count}, odrzucone: {self.rejected_count}, z ostrzeżeniami: {len(self.warnings)}."]
+        for issue in self.rejected:
+            lines.append(f"Wiersz {issue.row_number} ({issue.device_id}): odrzucony – {'; '.join(issue.reasons)}")
+        for issue in self.warnings:
+            lines.append(f"Wiersz {issue.row_number} ({issue.device_id}): ostrzeżenie – {'; '.join(issue.reasons)}")
+        return "\n".join(lines)
+
+
+def _is_empty(value: str) -> bool:
+    return value == "" or value.upper() == AED_EMPTY_VALUE
+
+
+def _parse_coordinate(value: str) -> Optional[float]:
+    try:
+        number = float(value.replace(",", "."))
+    except ValueError:
+        return None
+    if math.isnan(number):
+        return None
+    return number
+
+
+def _in_range(value: float, bounds: Tuple[float, float]) -> bool:
+    return bounds[0] <= value <= bounds[1]
+
+
+def _parse_date(value: str) -> Optional[datetime.date]:
+    if not DATE_RE.match(value):
+        return None
+    try:
+        return datetime.date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _valid_hours(value: str) -> bool:
+    if value in AED_HOURS_SPECIAL_VALUES:
+        return True
+    ranges = [part.strip() for part in value.split(",")]
+    return all(HOURS_RANGE_RE.match(part) for part in ranges)
+
+
+def normalize_aed_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Ujednolica nagłówki i wartości: tekst bez spacji na brzegach, puste jako „X”."""
+    df = df.copy()
+    df.columns = [str(column).strip().lower() for column in df.columns]
+    df = df.astype(object).where(pd.notna(df), "")
+    for column in df.columns:
+        df[column] = df[column].map(lambda value: str(value).strip())
+        df[column] = df[column].map(lambda value: AED_EMPTY_VALUE if value == "" else value)
+    for column in AED_YES_NO_COLUMNS:
+        if column in df.columns:
+            df[column] = df[column].str.upper()
+    return df
+
+
+def check_aed_columns(df: pd.DataFrame) -> None:
+    missing = [column for column in AED_COLUMNS if column not in df.columns]
+    if missing:
+        raise MainAEDMissingRequiredColumnError(missing)
+
+
+def _validate_row(row: pd.Series, today: datetime.date) -> Tuple[List[str], List[str], Optional[Tuple[float, float]]]:
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    for column in AED_REQUIRED_VALUE_COLUMNS:
+        if _is_empty(row[column]):
+            errors.append(f"brak wartości w kolumnie {column}")
+
+    point: Optional[Tuple[float, float]] = None
+    lat_raw, lon_raw = row["szerokosc_geograficzna"], row["dlugosc_geograficzna"]
+    if not _is_empty(lat_raw) and not _is_empty(lon_raw):
+        lat, lon = _parse_coordinate(lat_raw), _parse_coordinate(lon_raw)
+        if lat is None or lon is None:
+            errors.append("współrzędne muszą być liczbami (stopnie dziesiętne WGS84, np. 52.2297)")
+        elif _in_range(lat, AED_POLAND_LATITUDE) and _in_range(lon, AED_POLAND_LONGITUDE):
+            point = (lat, lon)
+        elif _in_range(lon, AED_POLAND_LATITUDE) and _in_range(lat, AED_POLAND_LONGITUDE):
+            errors.append("zamienione współrzędne: szerokość i długość geograficzna są w odwrotnych kolumnach")
+        else:
+            errors.append(f"punkt ({lat}, {lon}) leży poza Polską")
+
+    for column in AED_YES_NO_COLUMNS:
+        value = row[column]
+        if not _is_empty(value) and value not in AED_YES_NO_VALUES:
+            errors.append(f"{column}: dozwolone TAK, NIE albo X, jest „{value}”")
+
+    for column in AED_DATE_COLUMNS:
+        value = row[column]
+        if not _is_empty(value) and _parse_date(value) is None:
+            errors.append(f"{column}: data w formacie rrrr-mm-dd, jest „{value}”")
+
+    postal_code = row["kod_pocztowy"]
+    if not _is_empty(postal_code) and not POSTAL_CODE_RE.match(postal_code):
+        errors.append(f"kod_pocztowy: format 00-000, jest „{postal_code}”")
+
+    location = row["polozenie"]
+    if not _is_empty(location) and location not in AED_LOCATION_VALUES:
+        errors.append(f"polozenie: dozwolone „wewnątrz”, „na zewnątrz” albo X, jest „{location}”")
+
+    closed_days = []
+    for column in AED_WEEKDAY_COLUMNS:
+        value = row[column]
+        if _is_empty(value):
+            continue
+        if not _valid_hours(value):
+            errors.append(f"{column}: dozwolone HH:MM-HH:MM, 24h, nieczynne albo X, jest „{value}”")
+        elif value == "nieczynne":
+            closed_days.append(column)
+    if row["dostep_24h"] == "TAK" and closed_days:
+        errors.append(f"dostep_24h = TAK, ale {', '.join(closed_days)} = nieczynne")
+
+    for column, label in (("data_waznosci_elektrod", "elektrody"), ("data_waznosci_baterii", "bateria")):
+        expiry = _parse_date(row[column])
+        if expiry is None:
+            continue
+        if expiry < today:
+            warnings.append(f"{label}: termin ważności minął {expiry.isoformat()}")
+        elif (expiry - today).days <= AED_EXPIRY_WARNING_DAYS:
+            warnings.append(f"{label}: termin ważności mija {expiry.isoformat()}")
+
+    return errors, warnings, point
+
+
+def validate_aed_df(df: pd.DataFrame, today: Optional[datetime.date] = None) -> AEDValidationResult:
+    """
+    Sprawdza wykaz AED jednego dostawcy.
+
+    Raises:
+        MainAEDMissingRequiredColumnError: gdy brakuje kolumn wzorca.
+    """
+    today = today or datetime.date.today()
+    df = normalize_aed_df(df)
+    check_aed_columns(df)
+    df = df[AED_COLUMNS]
+
+    accepted_indexes: List[int] = []
+    warnings_per_row: List[str] = []
+    rejected: List[AEDRowIssue] = []
+    warnings: List[AEDRowIssue] = []
+    seen_ids = {}
+
+    for position, (index, row) in enumerate(df.iterrows()):
+        row_number = position + 2
+        device_id = row["id_urzadzenia"]
+        errors, row_warnings, _ = _validate_row(row, today)
+        if not _is_empty(device_id):
+            if device_id in seen_ids:
+                errors.append(f"identyfikator {device_id} powtarza się (wiersz {seen_ids[device_id]})")
+            else:
+                seen_ids[device_id] = row_number
+        if errors:
+            rejected.append(AEDRowIssue(row_number, device_id, errors))
+            continue
+        accepted_indexes.append(index)
+        warnings_per_row.append("; ".join(row_warnings) or AED_EMPTY_VALUE)
+        if row_warnings:
+            warnings.append(AEDRowIssue(row_number, device_id, row_warnings))
+
+    accepted = df.loc[accepted_indexes].copy()
+    for column in ("szerokosc_geograficzna", "dlugosc_geograficzna"):
+        accepted[column] = accepted[column].map(lambda value: float(value.replace(",", ".")))
+    accepted[MAIN_AED_WARNINGS_COLUMN] = warnings_per_row
+    accepted = accepted.reset_index(drop=True)
+    return AEDValidationResult(accepted=accepted, rejected=rejected, warnings=warnings)
+
+
+def distance_meters(a: Tuple[float, float], b: Tuple[float, float]) -> float:
+    """Odległość po kuli ziemskiej (haversine) w metrach."""
+    lat1, lon1, lat2, lon2 = map(math.radians, (a[0], a[1], b[0], b[1]))
+    h = math.sin((lat2 - lat1) / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin((lon2 - lon1) / 2) ** 2
+    return 2 * 6_371_000 * math.asin(math.sqrt(h))
+
+
+def mark_cross_provider_duplicates(main_df: pd.DataFrame, max_distance: float = AED_DUPLICATE_DISTANCE_METERS) -> pd.DataFrame:
+    """
+    Oznacza punkty, które leżą bliżej niż ``max_distance`` od punktu innego
+    dostawcy. Rekord zostaje w raporcie: o tym, który jest właściwy, decydują
+    dostawcy, a nie portal.
+    """
+    main_df = main_df.copy()
+    main_df[MAIN_AED_DUPLICATE_COLUMN] = AED_EMPTY_VALUE
+    if main_df.empty:
+        return main_df
+    # Siatka ok. 0,001° (ok. 70–110 m) ogranicza porównania do sąsiednich komórek.
+    cells = {}
+    points = list(
+        zip(
+            main_df.index,
+            main_df["szerokosc_geograficzna"].astype(float),
+            main_df["dlugosc_geograficzna"].astype(float),
+            main_df[MAIN_AED_PROVIDER_COLUMN],
+        )
+    )
+    for index, lat, lon, provider in points:
+        cells.setdefault((int(lat * 1000), int(lon * 1000)), []).append((index, lat, lon, provider))
+
+    for index, lat, lon, provider in points:
+        cell = (int(lat * 1000), int(lon * 1000))
+        matches = []
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for other_index, other_lat, other_lon, other_provider in cells.get((cell[0] + dx, cell[1] + dy), []):
+                    if other_index == index or other_provider == provider:
+                        continue
+                    if distance_meters((lat, lon), (other_lat, other_lon)) <= max_distance:
+                        matches.append(f"{other_provider}: {main_df.at[other_index, 'id_urzadzenia']}")
+        main_df.at[index, MAIN_AED_DUPLICATE_COLUMN] = "; ".join(sorted(matches)) or AED_EMPTY_VALUE
+    return main_df
+
+
+@dataclass
+class AEDProviderList:
+    provider_name: str
+    provider_regon: str
+    df: pd.DataFrame
+
+
+@dataclass
+class MainAEDResult:
+    main_df: pd.DataFrame
+    results: List[Tuple[str, Optional[AEDValidationResult], Optional[str]]]
+
+    def summary(self) -> str:
+        lines = [f"Raport zbiorczy: {len(self.main_df)} AED od {self.main_df[MAIN_AED_PROVIDER_COLUMN].nunique()} dostawców."]
+        for provider, result, skip_reason in self.results:
+            if skip_reason:
+                lines.append(f"- {provider}: wykaz pominięty – {skip_reason}")
+            else:
+                lines.append(f"- {provider}: przyjęte {result.accepted_count}, odrzucone {result.rejected_count}")
+        return "\n".join(lines)
+
+
+def build_main_aed_df(lists: Iterable[AEDProviderList], today: Optional[datetime.date] = None) -> MainAEDResult:
+    """
+    Skleja wykazy wielu dostawców w jeden raport zbiorczy.
+
+    Wykaz bez kolumn wzorca jest pomijany w całości (jak w DGA); z pozostałych
+    do raportu trafiają tylko wiersze, które przeszły walidacje AED.
+    """
+    frames: List[pd.DataFrame] = []
+    results: List[Tuple[str, Optional[AEDValidationResult], Optional[str]]] = []
+    for provider_list in lists:
+        try:
+            result = validate_aed_df(provider_list.df, today=today)
+        except MainAEDMissingRequiredColumnError as exc:
+            results.append((provider_list.provider_name, None, str(exc)))
+            continue
+        results.append((provider_list.provider_name, result, None))
+        if result.accepted.empty:
+            continue
+        frame = result.accepted.copy()
+        frame.insert(0, MAIN_AED_PROVIDER_REGON_COLUMN, provider_list.provider_regon or AED_EMPTY_VALUE)
+        frame.insert(0, MAIN_AED_PROVIDER_COLUMN, provider_list.provider_name)
+        frames.append(frame)
+
+    if frames:
+        main_df = pd.concat(frames, ignore_index=True)
+    else:
+        main_df = pd.DataFrame(columns=[c for c in MAIN_AED_COLUMNS if c not in ("Lp.", MAIN_AED_DUPLICATE_COLUMN)])
+    main_df = mark_cross_provider_duplicates(main_df)
+    main_df.insert(0, "Lp.", range(1, len(main_df) + 1))
+    main_df = main_df[MAIN_AED_COLUMNS]
+    return MainAEDResult(main_df=main_df, results=results)
