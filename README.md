@@ -123,7 +123,7 @@ flowchart TB
   ES[("Przetwarzanie pliku<br/>i indeks Elasticsearch<br/>schemat AED do mapy")]
   API["API portalu 1.4<br/>/geo i /data"]
   WWW["Strona publiczna dane.gov.pl<br/>wyszukiwarka, tabela, mapa, CSV"]
-  H["Import automatyczny (harvester)<br/>XML 1.14 containsAedList, CKAN contains_aed_list<br/>harvester/serializers.py"]
+  H["Import automatyczny<br/>XML 1.14 lub CKAN<br/>serializers.py"]
 
   H -- "zasób z flagą AED" --> DB
   DB -- "opublikowane wykazy" --> C
