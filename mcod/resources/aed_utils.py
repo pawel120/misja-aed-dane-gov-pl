@@ -123,7 +123,7 @@ def collect_aed_provider_lists(resources: QuerySet) -> List[AEDProviderList]:
         if df is None:
             continue
         organization = resource.institution
-        lists.append(AEDProviderList(organization.title, organization.regon or "", df))
+        lists.append(AEDProviderList(organization.title, organization.regon or "", df, provider_id=organization.pk))
     return lists
 
 

@@ -77,11 +77,11 @@ def test_main_report_counts_each_provider_and_poland_once(grid):
         [AEDProviderList("Urząd Miasta Legionowo", "1", legionowo), AEDProviderList("Kopia Legionowa", "2", legionowo)]
     )
     result.add_residents(grid)
-    assert result.residents["Urząd Miasta Legionowo"] == result.residents["Kopia Legionowa"]
-    assert result.residents_total == result.residents["Urząd Miasta Legionowo"]
+    assert result.residents[0] == result.residents[1]
+    assert result.residents_total == result.residents[0]
     summary = result.summary()
     assert f"mieszka {format_residents(result.residents_total)} osób" in summary
-    assert f"{format_residents(result.residents['Kopia Legionowa'])} mieszkańców w promieniu 200 m" in summary
+    assert f"{format_residents(result.residents[1])} mieszkańców w promieniu 200 m" in summary
 
 
 def test_summary_without_grid_has_no_residents():

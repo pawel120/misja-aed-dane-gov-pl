@@ -97,7 +97,12 @@ Wiersz z błędem nie trafia do raportu, a dostawca dostaje powód. Sprawdzamy:
   położenie (`wewnątrz`, `na zewnątrz`), spójność „dostęp 24h” z dniami „nieczynne”.
 
 Ostrzeżenia nie blokują wiersza: elektrody lub bateria tracące ważność w ciągu 90 dni, możliwy duplikat
-(urządzenie innego dostawcy bliżej niż 15 m).
+(urządzenie innego dostawcy bliżej niż 15 m; dostawca to instytucja w portalu, nie sama nazwa, więc dwa
+„Urzędy Gminy” są różnymi dostawcami, a dwa wykazy jednej instytucji – jednym).
+
+Wartości wpisane przez dostawców są ujednolicane do zapisu wzorca: „Wewnątrz” → „wewnątrz”, „24H” → „24h”, „8:00 - 16:00” → „08:00-16:00”.
+Komórki raportu zaczynające się od `=`, `+`, `-`, `@` dostają apostrof, żeby arkusz nie wykonał ich jako formuły
+(ochrona przed CSV injection).
 
 Odczyt pliku idzie drogą portalu: komórki Excela (daty, liczby) są czytane jako tekst wzorca, kodowanie CSV
 (UTF-8, Windows-1250, ISO-8859-2) rozpoznajemy tymi samymi bajtami co `mcod.resources.guess.file_encoding`,
@@ -105,10 +110,10 @@ a komunikaty formularza idą przez tłumaczenia portalu, jak w wykazie DGA.
 
 ## Testy
 
-Testy modułu AED (126 przechodzi, bez bazy danych): `mcod/resources/tests/test_aed_validation.py`, `test_aed_files.py`, `test_aed_forms.py`, `test_aed_residents.py`.
+Testy modułu AED (142 przechodzi, bez bazy danych): `mcod/resources/tests/test_aed_validation.py`, `test_aed_files.py`, `test_aed_forms.py`, `test_aed_residents.py`.
 Obejmują pliki z repozytorium (wzorzec, dane demo), pliki zapisane przez Excel, CSV z różnych programów
 i kodowań, wartości skrajne, raport 20 000 AED oraz walidację danych samego portalu (goodtables), którą zasób
-musi przejść, żeby trafić do raportu. Kolejne 6 testów oznaczonych `xfail` opisuje znane ograniczenia (niżej).
+musi przejść, żeby trafić do raportu. Jeden test oznaczony `xfail` opisuje znane ograniczenie (niżej).
 
 ```
 python -m pytest mcod/resources/tests/test_aed_validation.py mcod/resources/tests/test_aed_files.py mcod/resources/tests/test_aed_forms.py mcod/resources/tests/test_aed_residents.py --noconftest -o addopts=""
@@ -137,10 +142,7 @@ przepisane na wzorcowy zakres danych, oraz jeden wykaz testowy z celowymi błęd
 - Dane demo to 5 dostawców; w Polsce wykazy AED publikuje dziś kilkanaście miast, w różnych formatach.
 - Godziny dostępności w danych miast są nieustrukturyzowane; w wykazach demo wpisaliśmy „24h” tylko tam,
   gdzie źródło podaje dostęp całodobowy, w pozostałych „X”.
-- Wartości słownikowe muszą mieć zapis ze wzorca: „Wewnątrz” albo „24H” są odrzucane z podaniem powodu.
 - „Dostęp 24h: TAK” przy ograniczonych godzinach w dniu tygodnia nie jest jeszcze zgłaszany.
-- Dostawcy w raporcie są rozróżniani po nazwie instytucji, nie po jej identyfikatorze.
-- Raport CSV nie zabezpiecza komórek zaczynających się od „=” przed otwarciem jako formuła w arkuszu.
 - Liczba mieszkańców to szacunek z siatki 1 km (ludność rozłożona równo w komórce); przy samej granicy
   prostokąt siatki obejmuje też komórki krajów sąsiednich.
 - Flaga „wykaz AED” jest tylko w panelu. Automatyczny import portalu (harvester XML/CKAN) nie ma jeszcze

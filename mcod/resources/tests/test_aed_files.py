@@ -343,10 +343,27 @@ class TestRowValues:
         assert result.accepted_count == 1
         assert len(result.warnings[0].reasons) == 2
 
-    @pytest.mark.xfail(strict=True, reason="Znana luka: wartości słownikowe tylko w zapisie ze wzorca.")
-    @pytest.mark.parametrize("overrides", [{"polozenie": "Wewnątrz"}, {"godziny_pn": "24H"}, {"godziny_pn": "8:00-16:00"}])
-    def test_spelling_variants_people_use(self, overrides):
-        assert check(io.BytesIO(csv_bytes([aed_row(**overrides)])), "csv").accepted_count == 1
+    @pytest.mark.parametrize(
+        "column, written, stored",
+        [
+            ("polozenie", "Wewnątrz", "wewnątrz"),
+            ("polozenie", "NA ZEWNĄTRZ", "na zewnątrz"),
+            ("godziny_pn", "24H", "24h"),
+            ("godziny_pn", "Nieczynne", "nieczynne"),
+            ("godziny_pn", "8:00-16:00", "08:00-16:00"),
+            ("godziny_pn", "08:00 - 16:00", "08:00-16:00"),
+            ("godziny_pn", "8:00-12:00,13:00-16:00", "08:00-12:00, 13:00-16:00"),
+        ],
+    )
+    def test_spelling_variants_people_use_are_stored_in_template_form(self, column, written, stored):
+        result = check(io.BytesIO(csv_bytes([aed_row(**{column: written})])), "csv")
+        assert result.rejected == [], result.summary()
+        assert result.accepted.loc[0, column] == stored
+
+    def test_24h_device_with_closed_day_written_in_capitals_is_still_rejected(self):
+        data = [aed_row(dostep_24h="TAK", godziny_nd="NIECZYNNE")]
+        result = check(io.BytesIO(csv_bytes(data)), "csv")
+        assert any(reason.startswith("dostep_24h") for reason in result.rejected[0].reasons)
 
     @pytest.mark.xfail(strict=True, reason="Znana luka: brak sprawdzenia dostep_24h = TAK przy ograniczonych godzinach.")
     def test_24h_device_with_limited_hours(self):
@@ -402,17 +419,40 @@ class TestMainReport:
         ).main_df
         assert report[MAIN_AED_DUPLICATE_COLUMN].tolist() == ["Firma: F-9", "Gmina: G-1"]
 
-    @pytest.mark.xfail(strict=True, reason="Znana luka: dostawcy rozróżniani po nazwie, nie po ID instytucji.")
-    def test_two_institutions_with_the_same_name(self):
+    def test_two_institutions_with_the_same_name_are_different_providers(self):
         data = pd.DataFrame([aed_row()], columns=AED_COLUMNS)
-        report = build_main_aed_df([AEDProviderList("Urząd Gminy", "1", data), AEDProviderList("Urząd Gminy", "2", data)]).main_df
-        assert (report[MAIN_AED_DUPLICATE_COLUMN] != "X").all()
+        lists = [
+            AEDProviderList("Urząd Gminy", "1", data, provider_id=10),
+            AEDProviderList("Urząd Gminy", "1", data, provider_id=11),
+        ]
+        report = build_main_aed_df(lists, today=TODAY).main_df
+        assert report[MAIN_AED_DUPLICATE_COLUMN].tolist() == ["Urząd Gminy: AED-1", "Urząd Gminy: AED-1"]
 
-    @pytest.mark.xfail(strict=True, reason="Znana luka: brak ochrony przed formułami w CSV raportu (CSV injection).")
-    def test_formula_in_cell_does_not_reach_report_as_formula(self):
-        data = pd.DataFrame([aed_row(nazwa_miejsca='=HYPERLINK("http://example.com","AED")')], columns=AED_COLUMNS)
+    def test_two_lists_of_one_institution_are_one_provider(self):
+        first = pd.DataFrame([aed_row(id_urzadzenia="A-1")], columns=AED_COLUMNS)
+        second = pd.DataFrame([aed_row(id_urzadzenia="A-2", szerokosc_geograficzna="52.317050")], columns=AED_COLUMNS)
+        lists = [AEDProviderList("Gmina", "1", first, provider_id=10), AEDProviderList("Gmina", "1", second, provider_id=10)]
+        report = build_main_aed_df(lists, today=TODAY).main_df
+        assert report[MAIN_AED_DUPLICATE_COLUMN].tolist() == ["X", "X"]
+        assert "_klucz_dostawcy" not in report.columns
+
+    @pytest.mark.parametrize(
+        "value",
+        ['=HYPERLINK("http://example.com","AED")', "+48 22 000 00 00", "-1+1", "@SUM(A1:A2)", "\t=1+1"],
+    )
+    def test_formula_in_cell_does_not_reach_report_as_formula(self, value):
+        # Białe znaki na brzegach obcina już normalizacja, więc „\t=1+1” dochodzi jako „=1+1”.
+        data = pd.DataFrame([aed_row(nazwa_miejsca=value, opis_lokalizacji=value)], columns=AED_COLUMNS)
         report = build_main_aed_df([AEDProviderList("Gmina", "1", data)], today=TODAY).main_df
-        assert not report.loc[0, "nazwa_miejsca"].startswith("=")
+        assert report.loc[0, "nazwa_miejsca"] == "'" + value.strip()
+        assert report.loc[0, "opis_lokalizacji"] == "'" + value.strip()
+
+    def test_ordinary_values_and_numbers_are_not_changed(self):
+        data = pd.DataFrame([aed_row(nazwa_miejsca="Szkoła nr 2 – wejście B", nr_budynku="25/27")], columns=AED_COLUMNS)
+        report = build_main_aed_df([AEDProviderList("Gmina", "1", data)], today=TODAY).main_df
+        assert report.loc[0, "nazwa_miejsca"] == "Szkoła nr 2 – wejście B"
+        assert report.loc[0, "nr_budynku"] == "25/27"
+        assert isinstance(report.loc[0, "szerokosc_geograficzna"], float)
 
 
 class TestPortalDataValidation:

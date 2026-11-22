@@ -213,7 +213,21 @@ def normalize_aed_df(df: pd.DataFrame) -> pd.DataFrame:
     for column in AED_YES_NO_COLUMNS:
         if column in df.columns:
             df[column] = df[column].str.upper()
+    if "polozenie" in df.columns:
+        df["polozenie"] = df["polozenie"].map(lambda value: value.lower() if value.lower() in AED_LOCATION_VALUES else value)
+    for column in AED_WEEKDAY_COLUMNS:
+        if column in df.columns:
+            df[column] = df[column].map(_normalize_hours)
     return df
+
+
+def _normalize_hours(value: str) -> str:
+    """„24H” -> „24h”, „Nieczynne” -> „nieczynne”, „8:00 - 16:00” -> „08:00-16:00”."""
+    if value.lower() in AED_HOURS_SPECIAL_VALUES:
+        return value.lower()
+    value = re.sub(r"\s*-\s*", "-", value)
+    value = re.sub(r"\s*,\s*", ", ", value)
+    return re.sub(r"(?<!\d)(\d):([0-5]\d)", r"0\1:\2", value)
 
 
 def check_aed_columns(df: pd.DataFrame) -> None:
@@ -339,6 +353,10 @@ def distance_meters(a: Tuple[float, float], b: Tuple[float, float]) -> float:
     return 2 * 6_371_000 * math.asin(math.sqrt(h))
 
 
+# Kolumna robocza: kto jest dostawcą (identyfikator instytucji), nie trafia do raportu.
+_PROVIDER_KEY_COLUMN = "_klucz_dostawcy"
+
+
 def mark_cross_provider_duplicates(main_df: pd.DataFrame, max_distance: float = AED_DUPLICATE_DISTANCE_METERS) -> pd.DataFrame:
     """
     Oznacza punkty, które leżą bliżej niż ``max_distance`` od punktu innego
@@ -356,11 +374,12 @@ def mark_cross_provider_duplicates(main_df: pd.DataFrame, max_distance: float = 
             main_df.index,
             main_df["szerokosc_geograficzna"].astype(float),
             main_df["dlugosc_geograficzna"].astype(float),
-            main_df[MAIN_AED_PROVIDER_COLUMN],
+            main_df[_PROVIDER_KEY_COLUMN] if _PROVIDER_KEY_COLUMN in main_df else main_df[MAIN_AED_PROVIDER_COLUMN],
         )
     )
     for index, lat, lon, provider in points:
         cells.setdefault((int(lat * 1000), int(lon * 1000)), []).append((index, lat, lon, provider))
+    names = main_df[MAIN_AED_PROVIDER_COLUMN]
 
     for index, lat, lon, provider in points:
         cell = (int(lat * 1000), int(lon * 1000))
@@ -371,7 +390,7 @@ def mark_cross_provider_duplicates(main_df: pd.DataFrame, max_distance: float = 
                     if other_index == index or other_provider == provider:
                         continue
                     if distance_meters((lat, lon), (other_lat, other_lon)) <= max_distance:
-                        matches.append(f"{other_provider}: {main_df.at[other_index, 'id_urzadzenia']}")
+                        matches.append(f"{names[other_index]}: {main_df.at[other_index, 'id_urzadzenia']}")
         main_df.at[index, MAIN_AED_DUPLICATE_COLUMN] = "; ".join(sorted(matches)) or AED_EMPTY_VALUE
     return main_df
 
@@ -381,6 +400,14 @@ class AEDProviderList:
     provider_name: str
     provider_regon: str
     df: pd.DataFrame
+    # Identyfikator instytucji w portalu: dwie instytucje mogą mieć tę samą nazwę.
+    provider_id: Optional[int] = None
+
+    @property
+    def provider_key(self) -> str:
+        if self.provider_id is not None:
+            return f"id:{self.provider_id}"
+        return f"{self.provider_name}|{self.provider_regon}"
 
 
 @dataclass
@@ -388,13 +415,13 @@ class MainAEDResult:
     main_df: pd.DataFrame
     results: List[Tuple[str, Optional[AEDValidationResult], Optional[str]]]
     # Mieszkańcy w promieniu 200 m: per dostawca i łącznie (bez podwójnego liczenia).
-    residents: Dict[str, int] = field(default_factory=dict)
+    residents: Dict[int, int] = field(default_factory=dict)  # pozycja w ``results`` -> liczba
     residents_total: Optional[int] = None
 
     def add_residents(self, grid: "PopulationGrid") -> None:
-        for provider, result, _skip_reason in self.results:
+        for position, (_provider, result, _skip_reason) in enumerate(self.results):
             if result is not None:
-                self.residents[provider] = grid.residents_for_aed_df(result.accepted)
+                self.residents[position] = grid.residents_for_aed_df(result.accepted)
         self.residents_total = grid.residents_for_aed_df(self.main_df)
 
     def summary(self) -> str:
@@ -404,13 +431,13 @@ class MainAEDResult:
                 f" W promieniu {AED_RESIDENTS_RADIUS_METERS} m od tych AED mieszka "
                 f"{format_residents(self.residents_total)} osób."
             )
-        for provider, result, skip_reason in self.results:
+        for position, (provider, result, skip_reason) in enumerate(self.results):
             if skip_reason:
                 lines.append(f"- {provider}: wykaz pominięty – {skip_reason}")
                 continue
             line = f"- {provider}: przyjęte {result.accepted_count}, odrzucone {result.rejected_count}"
-            if provider in self.residents:
-                residents = format_residents(self.residents[provider])
+            if position in self.residents:
+                residents = format_residents(self.residents[position])
                 line += f", {residents} mieszkańców w promieniu {AED_RESIDENTS_RADIUS_METERS} m"
             lines.append(line)
         return "\n".join(lines)
@@ -437,6 +464,7 @@ def build_main_aed_df(lists: Iterable[AEDProviderList], today: Optional[datetime
         frame = result.accepted.copy()
         frame.insert(0, MAIN_AED_PROVIDER_REGON_COLUMN, provider_list.provider_regon or AED_EMPTY_VALUE)
         frame.insert(0, MAIN_AED_PROVIDER_COLUMN, provider_list.provider_name)
+        frame[_PROVIDER_KEY_COLUMN] = provider_list.provider_key
         frames.append(frame)
 
     if frames:
@@ -446,7 +474,19 @@ def build_main_aed_df(lists: Iterable[AEDProviderList], today: Optional[datetime
     main_df = mark_cross_provider_duplicates(main_df)
     main_df.insert(0, "Lp.", range(1, len(main_df) + 1))
     main_df = main_df[MAIN_AED_COLUMNS]
+    main_df = main_df.apply(lambda column: column.map(neutralize_formula) if column.dtype == object else column)
     return MainAEDResult(main_df=main_df, results=results)
+
+
+# Znaki, od których arkusz zaczyna formułę (OWASP: CSV injection).
+_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def neutralize_formula(value: Any) -> Any:
+    """Komórka tekstowa zaczynająca się od znaku formuły dostaje apostrof, żeby arkusz jej nie wykonał."""
+    if isinstance(value, str) and value.startswith(_FORMULA_PREFIXES):
+        return "'" + value
+    return value
 
 
 # Kolumny mapy portalu (GEO_TYPES): szerokość „b”, długość „l”, etykieta „label”.
