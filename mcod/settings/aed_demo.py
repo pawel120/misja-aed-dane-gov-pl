@@ -80,3 +80,7 @@ AXES_ENABLED=False
 CSRF_COOKIE_DOMAIN = None
 DISCOURSE_FORUM_ENABLED = False
 ADMIN_URL = env("ADMIN_URL", default="http://127.0.0.1:8001")
+
+# local.py.sample dodaje "timeout" do ustawień indeksu; Elasticsearch 6.8 odrzuca to ustawienie.
+ELASTICSEARCH_DSL_INDEX_SETTINGS = {"number_of_shards": 1, "number_of_replicas": 0}
+ELASTICSEARCH_HISTORIES_IDX_SETTINGS = {"number_of_shards": 1, "number_of_replicas": 0}
