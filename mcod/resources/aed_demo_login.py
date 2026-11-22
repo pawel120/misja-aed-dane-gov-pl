@@ -42,6 +42,20 @@ def get_aed_demo_login_deadline() -> Optional[datetime.datetime]:
     return datetime.datetime.fromisoformat(value)
 
 
+def clear_invalid_last_logged_method(user) -> None:
+    """
+    Portal sprawdza ``User.last_logged_method`` z wyborami tłumaczonymi na bieżący
+    język (``LoggingMethod.FORM = _("Form")``), więc konto, które ostatnio logowało się
+    formularzem w innym języku („Form”), nie przechodzi ``full_clean`` przy zapisie
+    ``last_login``. Pustą wartość portal dopuszcza, więc taką wpisujemy.
+    """
+    field = user._meta.get_field("last_logged_method")
+    allowed = {str(value) for value, _label in field.choices}
+    if user.last_logged_method and str(user.last_logged_method) not in allowed:
+        type(user).objects.filter(pk=user.pk).update(last_logged_method=None)
+        user.last_logged_method = None
+
+
 class AEDDemoJuryLoginMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -63,6 +77,7 @@ class AEDDemoJuryLoginMiddleware:
         if user is None:
             logger.warning("AED demo login: no active staff account %s.", settings.AED_DEMO_LOGIN_EMAIL)
             raise Http404
+        clear_invalid_last_logged_method(user)
         login(request, user, backend=AED_DEMO_LOGIN_BACKEND)
         logger.info("AED demo login used for %s.", user.email)
         return HttpResponseRedirect(getattr(settings, "AED_DEMO_LOGIN_NEXT", "/") or "/")

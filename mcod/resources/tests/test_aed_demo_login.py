@@ -6,7 +6,11 @@ import pytest
 from django.http import Http404, HttpResponse
 from django.test import RequestFactory, override_settings
 
-from mcod.resources.aed_demo_login import AEDDemoJuryLoginMiddleware, get_aed_demo_login_token
+from mcod.resources.aed_demo_login import (
+    AEDDemoJuryLoginMiddleware,
+    clear_invalid_last_logged_method,
+    get_aed_demo_login_token,
+)
 
 TOKEN = "s3kretny-kod-jury"
 DEMO = dict(
@@ -32,16 +36,18 @@ def test_other_paths_are_not_touched():
 
 
 @override_settings(**DEMO)
+@mock.patch("mcod.resources.aed_demo_login.clear_invalid_last_logged_method")
 @mock.patch("mcod.resources.aed_demo_login.login")
 @mock.patch("mcod.resources.aed_demo_login.get_user_model")
-def test_correct_link_logs_jury_in_and_opens_panel(get_user_model, login):
-    jury = mock.Mock(email="jury@aed.demo")
+def test_correct_link_logs_jury_in_and_opens_panel(get_user_model, login, clear_login_method):
+    jury = mock.Mock(email="jury@aed.demo", last_logged_method=None)
     get_user_model.return_value.objects.filter.return_value.first.return_value = jury
     response = middleware()(get(f"/aed-demo/wejdz/{TOKEN}/"))
     assert response.status_code == 302
     assert response["Location"] == "/resources/resource/1/change/"
     get_user_model.return_value.objects.filter.assert_called_once_with(email="jury@aed.demo", is_active=True, is_staff=True)
     assert login.call_args.args[1] is jury
+    clear_login_method.assert_called_once_with(jury)
 
 
 @pytest.mark.parametrize("path", ["/aed-demo/wejdz/zly-kod/", "/aed-demo/wejdz/", f"/aed-demo/wejdz/{TOKEN}x/"])
@@ -84,3 +90,37 @@ def test_code_can_come_from_file_outside_git(tmp_path):
     path.write_text(" z-pliku \n", encoding="utf-8")
     with override_settings(AED_DEMO_LOGIN_TOKEN="", AED_DEMO_LOGIN_TOKEN_FILE=str(path)):
         assert get_aed_demo_login_token() == "z-pliku"
+
+
+class _UserWithLoginMethod:
+    """Konto z polem ``last_logged_method`` portalu, bez bazy danych."""
+
+    from mcod.users.models import User as _User
+
+    _meta = _User._meta
+    objects = mock.Mock()
+
+    def __init__(self, value):
+        self.pk = 7
+        self.last_logged_method = value
+
+
+@pytest.mark.parametrize("value", ["Form", "nieznana-metoda"])
+def test_login_method_not_valid_in_polish_panel_is_cleared(value):
+    # Na serwerze demo konto jury miało „Form”, a polski panel dopuszcza tłumaczenie tej wartości.
+    from django.utils import translation
+
+    with translation.override("pl"):
+        user = _UserWithLoginMethod(value)
+        clear_invalid_last_logged_method(user)
+    assert user.last_logged_method is None
+    user.objects.filter.assert_called_with(pk=7)
+
+
+@pytest.mark.parametrize("value", [None, "WK"])
+def test_valid_login_method_is_kept(value):
+    user = _UserWithLoginMethod(value)
+    user.objects.reset_mock()
+    clear_invalid_last_logged_method(user)
+    assert user.last_logged_method == value
+    user.objects.filter.assert_not_called()
