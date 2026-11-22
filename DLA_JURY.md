@@ -15,6 +15,8 @@ mechanizm „Wykaz AED”, wzorowany na istniejącym w portalu wykazie chroniony
 
 | Co | Adres |
 |---|---|
+| **Strona publiczna portalu** (frontend dane.gov.pl bez zmian): raport zbiorczy z mapą | https://portal.145-239-30-81.sslip.io/pl/dataset/6 |
+| Wyszukiwarka portalu | https://portal.145-239-30-81.sslip.io/pl/search?q=defibrylator |
 | Panel administracyjny portalu (z modułem) | https://admin.145-239-30-81.sslip.io |
 | API portalu: zbiór raportu zbiorczego (Ministerstwo Cyfryzacji) | https://api.145-239-30-81.sslip.io/1.4/datasets/6 |
 | API portalu: punkty mapy raportu zbiorczego | https://api.145-239-30-81.sslip.io/1.4/resources/ID/geo (ID = numer zasobu „Wykaz defibrylatorów AED” z panelu; zmienia się po każdym przeliczeniu raportu) |
@@ -24,6 +26,9 @@ To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
 
 ## Kroki dla jury (ok. 5 minut)
 
+0. Bez logowania: wejdź na stronę publiczną, wpisz w wyszukiwarkę „defibrylator”, otwórz
+   „Wykaz defibrylatorów AED” i zakładkę **Mapa** – 775 AED od 5 dostawców na mapie portalu.
+   Strona działa także na telefonie (układ portalu jest responsywny).
 1. Zaloguj się do panelu. Wejdź w **Dane → Resources**.
 2. Otwórz „Wykaz AED – Urząd Miasta Legionowo”. Pod polem DGA „Contains protected data list”
    jest nasze pole **„Contains AED list: Tak”** z opisem mechanizmu.
@@ -46,7 +51,8 @@ To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
 | Wzorcowy zakres danych (xlsx) | `wzorcowy_zakres_AED.xlsx` w zgłoszeniu; kolumny w `mcod/resources/aed_constants.py` | plik xlsx |
 | Format odczytywalny maszynowo | raport zbiorczy: CSV UTF-8, API JSON | krok 5–6 |
 | Kod źródłowy | to repozytorium | `git log` |
-| Prototyp | panel pod adresem wyżej | kroki 1–7 |
+| Prototyp | strona publiczna i panel pod adresami wyżej | kroki 0–7 |
+| Responsywność, WCAG | strona publiczna portalu (ich frontend: przełączniki kontrastu i wielkości czcionki) | otwórz na telefonie |
 
 ## Dane
 
@@ -55,8 +61,8 @@ przepisane na wzorcowy zakres danych, oraz jeden wykaz testowy z celowymi błęd
 
 ## Ograniczenia
 
-- Strona publiczna portalu (frontend Angular) nie jest uruchomiona; mapę raportu pokazuje API i panel.
-- Wyszukiwarka API (`/datasets/ID/resources`) w demo zwraca błąd indeksu Elasticsearch; szczegóły zbioru i zasobu działają.
+- Bez CMS portalu (Wagtail): na stronie publicznej puste są aktualności, strony informacyjne i okno „Polityka prywatności i RODO”.
+- Frontend portalu jest zbudowany bez zmian; wyłączyliśmy tylko wysyłanie raportów błędów do Sentry ministerstwa.
 - Raport zbiorczy powstaje w zadaniu Celery o 05:00; w demo jury uruchamia go akcją w panelu.
 - Dane demo to 5 dostawców; w Polsce wykazy AED publikuje dziś kilkanaście miast, w różnych formatach.
 - Godziny dostępności w danych miast są nieustrukturyzowane; w wykazach demo wpisaliśmy „24h” tylko tam,

@@ -1,0 +1,64 @@
+# Demo wykazu AED (HackNation 2026). Kontenery słuchają tylko na 127.0.0.1.
+admin.145-239-30-81.sslip.io {
+	encode gzip
+	reverse_proxy 127.0.0.1:8001
+}
+
+api.145-239-30-81.sslip.io {
+	encode gzip
+	reverse_proxy 127.0.0.1:8000
+}
+
+145-239-30-81.sslip.io {
+	redir https://admin.145-239-30-81.sslip.io{uri}
+}
+
+# Publiczna strona portalu (ich frontend Angular, bez zmian) + nasze API.
+portal.145-239-30-81.sslip.io {
+	encode gzip
+	handle_path /api/* {
+		rewrite * /1.4{uri}
+		reverse_proxy 127.0.0.1:8000
+	}
+	handle /media/* {
+		reverse_proxy 127.0.0.1:8001
+	}
+	handle /flags* {
+		reverse_proxy https://dane.gov.pl {
+			header_up Host dane.gov.pl
+		}
+	}
+	handle {
+		root * /srv/frontend
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# Adresy, które frontend wylicza z nazwy hosta (api.<host>, cms.<host>).
+api.portal.145-239-30-81.sslip.io {
+	header {
+		Access-Control-Allow-Origin "https://portal.145-239-30-81.sslip.io"
+		Access-Control-Allow-Credentials "true"
+		Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+		Access-Control-Allow-Headers "DNT,Authorization,User-Agent,X-Requested-With,X-Api-Version,If-Modified-Since,Cache-Control,Content-Type,Range,Expires,Pragma,Accept-Language,Sentry-Trace,Baggage"
+		Access-Control-Expose-Headers "Content-Length,Content-Range"
+	}
+	@preflight method OPTIONS
+	respond @preflight 204
+	encode gzip
+	reverse_proxy 127.0.0.1:8000
+}
+
+cms.portal.145-239-30-81.sslip.io {
+	header {
+		Access-Control-Allow-Origin "https://portal.145-239-30-81.sslip.io"
+		Access-Control-Allow-Credentials "true"
+		Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+		Access-Control-Allow-Headers "DNT,Authorization,User-Agent,X-Requested-With,X-Api-Version,If-Modified-Since,Cache-Control,Content-Type,Range,Expires,Pragma,Accept-Language,Sentry-Trace,Baggage"
+		Access-Control-Expose-Headers "Content-Length,Content-Range"
+	}
+	@preflight method OPTIONS
+	respond @preflight 204
+	respond 404
+}
