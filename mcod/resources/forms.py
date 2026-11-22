@@ -277,7 +277,9 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             "dobę dołącza go do zbiorczego wykazu AED. Plik (csv, xls, xlsx) musi "
             "mieć kolumny wzorcowego zakresu danych o AED."
         ),
-        widget=CheckboxSelect(attrs={"class": "inline"}),
+        # Przyciski radiowe zamiast CheckboxSelect: przy domyślnym „Nie” zaznaczenie „Tak”
+        # nie może zostawić obu wartości (wtedy formularz zapisałby „Nie”).
+        widget=forms.RadioSelect(attrs={"class": "inline"}),
     )
     confirm_save = forms.CharField(required=False, widget=forms.HiddenInput())
 
