@@ -2,9 +2,9 @@
 
 **HackNation 2026 · Misja AED (Ministerstwo Cyfryzacji)**
 
-[![Film: Twoje dane, czyjeś serce](.github/readme/plakat_filmu.jpg)](https://youtu.be/Rg7DOgKYVwk)
+https://github.com/user-attachments/assets/e102be66-c088-49c4-a016-ad295362e498
 
-▶ **[Obejrzyj film na YouTube (1:20)](https://youtu.be/Rg7DOgKYVwk)** · plik: [film/Twoje_dane_czyjes_serce.mp4](film/Twoje_dane_czyjes_serce.mp4)
+▶ Film (1:20) · [YouTube](https://youtu.be/Rg7DOgKYVwk) · [plik mp4](film/Twoje_dane_czyjes_serce.mp4)
 
 [Prototyp](#wypróbuj-prototyp) · [Jak to działa](#jak-to-działa) · [Kampania](#kampania-twoje-dane-czyjeś-serce) · [Wymagania](#gdzie-sprawdzić-każde-wymaganie) · [Architektura](#architektura) · [Dla jury](DLA_JURY.md)
 
