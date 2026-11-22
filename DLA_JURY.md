@@ -90,6 +90,21 @@ nie trafia do publicznego raportu.
 
 **Obywatel i służby**: wyszukiwarka portalu („defibrylator”), mapa raportu, plik CSV do pobrania, API portalu (`/geo`, `/data`).
 
+## Zasilanie ręczne i automatyczne
+
+Wykaz AED dostawca może publikować tak samo jak każdy zasób portalu:
+
+- **ręcznie** w panelu: zasób z plikiem i pole „Zawiera wykaz defibrylatorów AED: Tak” (kroki wyżej);
+- **automatycznie** przez import portalu (harvester), na wzór pola `containsProtectedData` wykazu DGA:
+  - plik XML w nowej wersji schematu **1.14** (`data/harvester/xml_import_otwarte_dane_1_14.xsd` = 1.13 +
+    element `<containsAedList>true</containsAedList>` w zasobie; przykład:
+    `data/test_samples/harvester/import_example1.14.xml`); starsze wersje 1.0–1.13 działają bez zmian,
+  - katalog CKAN: pole zasobu `contains_aed_list`.
+
+  Zasób z importu dostaje flagę „wykaz AED” i trafia do raportu zbiorczego jak zasób z panelu
+  (w panelu flaga jest wtedy tylko do odczytu, jak inne pola z importu). Sprawdzone importem pliku XML 1.14
+  w lokalnym portalu i testami `mcod/harvester/tests/test_aed_harvester.py`.
+
 ## Walidacje AED (`mcod/resources/aed_validation.py`)
 
 Wiersz z błędem nie trafia do raportu, a dostawca dostaje powód. Sprawdzamy:
@@ -113,13 +128,13 @@ a komunikaty formularza idą przez tłumaczenia portalu, jak w wykazie DGA.
 
 ## Testy
 
-Testy modułu AED (142 przechodzi, bez bazy danych): `mcod/resources/tests/test_aed_validation.py`, `test_aed_files.py`, `test_aed_forms.py`, `test_aed_residents.py`.
+Testy modułu AED (163 przechodzi, bez bazy danych): `mcod/resources/tests/test_aed_validation.py`, `test_aed_files.py`, `test_aed_forms.py`, `test_aed_residents.py`, `test_aed_demo_login.py` i `mcod/harvester/tests/test_aed_harvester.py`.
 Obejmują pliki z repozytorium (wzorzec, dane demo), pliki zapisane przez Excel, CSV z różnych programów
 i kodowań, wartości skrajne, raport 20 000 AED oraz walidację danych samego portalu (goodtables), którą zasób
 musi przejść, żeby trafić do raportu. Jeden test oznaczony `xfail` opisuje znane ograniczenie (niżej).
 
 ```
-python -m pytest mcod/resources/tests/test_aed_validation.py mcod/resources/tests/test_aed_files.py mcod/resources/tests/test_aed_forms.py mcod/resources/tests/test_aed_residents.py --noconftest -o addopts=""
+python -m pytest mcod/resources/tests/test_aed_validation.py mcod/resources/tests/test_aed_files.py mcod/resources/tests/test_aed_forms.py mcod/resources/tests/test_aed_residents.py mcod/resources/tests/test_aed_demo_login.py mcod/harvester/tests/test_aed_harvester.py --noconftest -o addopts=""
 ```
 (w kontenerze aplikacji portalu, z zainstalowanym `pytest` i `pytest-django`)
 
@@ -156,8 +171,8 @@ przepisane na wzorcowy zakres danych, oraz jeden wykaz testowy z celowymi błęd
 - „Dostęp 24h: TAK” przy ograniczonych godzinach w dniu tygodnia nie jest jeszcze zgłaszany.
 - Liczba mieszkańców to szacunek z siatki 1 km (ludność rozłożona równo w komórce); przy samej granicy
   prostokąt siatki obejmuje też komórki krajów sąsiednich.
-- Flaga „wykaz AED” jest tylko w panelu. Automatyczny import portalu (harvester XML/CKAN) nie ma jeszcze
-  pola AED; następny krok to jedno pole, tak jak `containsProtectedData` dla DGA.
+- Automatyczny import ustawia samą flagę „wykaz AED”; walidacje AED dostawca widzi przy imporcie dopiero
+  w podsumowaniu raportu zbiorczego, nie w raporcie importu (w panelu dostaje je od razu przy wgraniu pliku).
 
 ## Uruchomienie u siebie
 

@@ -256,6 +256,8 @@ class ResourceSchema(ResourceMixin, CKANPreProcessedSchema):
     )
     has_research_data = Bool(allow_none=True, missing=None)
     contains_protected_data = Bool(allow_none=True, missing=False)
+    # Bez allow_none: pole modelu nie przyjmuje NULL, więc „null” z CKAN ma być błędem walidacji, nie zapisu.
+    contains_aed_list = Bool(missing=False)
     package_id = UUID()
     position = Int()
     resource_type = Str(allow_none=True)
@@ -278,6 +280,7 @@ class ResourceSchema(ResourceMixin, CKANPreProcessedSchema):
             "has_high_value_data_from_ec_list",
             "has_research_data",
             "contains_protected_data",
+            "contains_aed_list",
         )
         unknown = EXCLUDE
 
@@ -434,6 +437,7 @@ class XMLResourceSchema(ResourceMixin, XMLPreProcessedSchema):
     has_high_value_data_from_ec_list = Bool(data_key="hasHighValueDataFromEuropeanCommissionList", allow_none=True, missing=None)
     has_research_data = Bool(data_key="hasResearchData", allow_none=True, missing=None)
     contains_protected_data = Bool(data_key="containsProtectedData", missing=False)
+    contains_aed_list = Bool(data_key="containsAedList", missing=False)
     supplements = Nested(XMLSupplementSchema, many=True)
     is_auto_data_date = Bool(data_key="isAutoDataDate")
     data_date_update_period = Str(
