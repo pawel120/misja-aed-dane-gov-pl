@@ -64,10 +64,21 @@ To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
 2. Dodaje zasób z plikiem (csv, xls, xlsx) i zaznacza „Zawiera wykaz defibrylatorów AED: TAK”.
 3. Jeśli plik ma błędy, formularz nie zapisuje zasobu i wypisuje numery wierszy z powodami
    (np. „zamienione współrzędne”, „data w formacie rrrr-mm-dd”). Dostawca poprawia plik i wgrywa go ponownie.
-4. Kiedy zmieni się stan urządzeń, podmienia plik w tym samym zasobie.
+4. Po zapisaniu poprawnego wykazu panel dziękuje i pokazuje, ilu mieszkańców ma dzięki niemu AED w otwartych danych:
+   „Dziękujemy. Dzięki Tobie 12 797 mieszkańców ma AED w promieniu 200 m w otwartych danych.” (Legionowo, 24 AED).
+5. Kiedy zmieni się stan urządzeń, podmienia plik w tym samym zasobie.
 
 **Portal** codziennie o 05:00 skleja opublikowane wykazy w raport zbiorczy (administrator może to zrobić od razu akcją w panelu).
 Ten sam zasób raportu dostaje nowy plik, więc adres strony, mapy i API się nie zmienia.
+Komunikat akcji podaje przy każdym dostawcy liczbę mieszkańców w promieniu 200 m i sumę dla całego raportu
+(dane demo: 775 AED, 509 266 osób).
+
+**Mieszkańcy w zasięgu AED** (`PopulationGrid` w `aed_validation.py`): okrąg 200 m wokół każdego AED dzielimy
+na kwadraty 50 × 50 m na wspólnej siatce; kwadrat dostaje 1/400 ludności swojej komórki 1 km. Kwadraty sumujemy
+bez powtórzeń, więc urządzenia blisko siebie nie liczą tych samych osób dwa razy. Źródło ludności: siatka 1 km
+ze spisu powszechnego 2021 (Eurostat GISCO, Census grid 2021, dane GUS), przycięta do Polski
+(`data/aed/ludnosc_pl_1km_epsg3035.npz`, EPSG:3035). Liczba jest szacunkiem do komunikatów w panelu,
+nie trafia do publicznego raportu.
 
 **Obywatel i służby**: wyszukiwarka portalu („defibrylator”), mapa raportu, plik CSV do pobrania, API portalu (`/geo`, `/data`).
 
@@ -89,13 +100,13 @@ a komunikaty formularza idą przez tłumaczenia portalu, jak w wykazie DGA.
 
 ## Testy
 
-Testy modułu AED (113 przechodzi, bez bazy danych): `mcod/resources/tests/test_aed_validation.py`, `test_aed_files.py`, `test_aed_forms.py`.
+Testy modułu AED (126 przechodzi, bez bazy danych): `mcod/resources/tests/test_aed_validation.py`, `test_aed_files.py`, `test_aed_forms.py`, `test_aed_residents.py`.
 Obejmują pliki z repozytorium (wzorzec, dane demo), pliki zapisane przez Excel, CSV z różnych programów
 i kodowań, wartości skrajne, raport 20 000 AED oraz walidację danych samego portalu (goodtables), którą zasób
 musi przejść, żeby trafić do raportu. Kolejne 6 testów oznaczonych `xfail` opisuje znane ograniczenia (niżej).
 
 ```
-python -m pytest mcod/resources/tests/test_aed_validation.py mcod/resources/tests/test_aed_files.py mcod/resources/tests/test_aed_forms.py --noconftest -o addopts=""
+python -m pytest mcod/resources/tests/test_aed_validation.py mcod/resources/tests/test_aed_files.py mcod/resources/tests/test_aed_forms.py mcod/resources/tests/test_aed_residents.py --noconftest -o addopts=""
 ```
 (w kontenerze aplikacji portalu, z zainstalowanym `pytest` i `pytest-django`)
 
@@ -125,6 +136,8 @@ przepisane na wzorcowy zakres danych, oraz jeden wykaz testowy z celowymi błęd
 - „Dostęp 24h: TAK” przy ograniczonych godzinach w dniu tygodnia nie jest jeszcze zgłaszany.
 - Dostawcy w raporcie są rozróżniani po nazwie instytucji, nie po jej identyfikatorze.
 - Raport CSV nie zabezpiecza komórek zaczynających się od „=” przed otwarciem jako formuła w arkuszu.
+- Liczba mieszkańców to szacunek z siatki 1 km (ludność rozłożona równo w komórce); przy samej granicy
+  prostokąt siatki obejmuje też komórki krajów sąsiednich.
 - Flaga „wykaz AED” jest tylko w panelu. Automatyczny import portalu (harvester XML/CKAN) nie ma jeszcze
   pola AED; następny krok to jedno pole, tak jak `containsProtectedData` dla DGA.
 

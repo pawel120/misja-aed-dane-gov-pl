@@ -14,6 +14,7 @@ Zbiorczy wykaz defibrylatorów AED (Main AED), na wzór wykazu DGA.
 import datetime
 import logging
 import os
+from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -28,11 +29,33 @@ from mcod.resources.aed_constants import ALLOWED_AED_INSTITUTIONS
 from mcod.resources.aed_validation import (
     AEDProviderList,
     MainAEDResult,
+    PopulationGrid,
     build_main_aed_df,
     read_aed_file,
 )
 
 logger = logging.getLogger("mcod")
+
+
+@lru_cache(maxsize=1)
+def get_aed_population_grid() -> Optional[PopulationGrid]:
+    try:
+        return PopulationGrid.from_npz(settings.AED_POPULATION_GRID_PATH)
+    except Exception as exc:
+        logger.warning("AED population grid unavailable (%s): %s", settings.AED_POPULATION_GRID_PATH, exc)
+        return None
+
+
+def count_aed_residents(df: pd.DataFrame) -> Optional[int]:
+    """Mieszkańcy w promieniu 200 m od AED z poprawnych wierszy wykazu; None, gdy nie da się policzyć."""
+    grid = get_aed_population_grid()
+    if grid is None:
+        return None
+    try:
+        return grid.residents_for_aed_df(df)
+    except Exception as exc:
+        logger.warning("Cannot count residents near AED: %s", exc)
+        return None
 
 
 def get_main_aed_dataset() -> Optional["Dataset"]:  # noqa: F821
@@ -115,6 +138,12 @@ def create_main_aed_file() -> Tuple[Path, MainAEDResult]:
     """Tworzy plik CSV (UTF-8) raportu zbiorczego i zwraca go razem z podsumowaniem walidacji."""
     resources = get_all_aed_resources_sorted_by_organizations()
     result = build_main_aed_df(collect_aed_provider_lists(resources))
+    grid = get_aed_population_grid()
+    if grid is not None:
+        try:
+            result.add_residents(grid)
+        except Exception as exc:
+            logger.warning("Cannot count residents near AED in main report: %s", exc)
     logger.info("Main AED: %s", result.summary())
     file_path = get_main_aed_path()
     result.main_df.to_csv(file_path, index=False, encoding="utf-8")

@@ -61,3 +61,16 @@ def test_duplicated_columns_give_form_error_not_crash():
     )
     assert len(form.errors) == 1
     assert "id_urzadzenia" in form.errors[0][1]
+
+
+def test_valid_aed_file_counts_residents_for_thank_you_message():
+    form = _FormErrors()
+    ResourceForm._validate_aed_file(form, _aed_csv(), error_field="file")
+    assert form.errors == []
+    assert form.aed_residents > 0
+
+
+def test_rejected_file_has_no_thank_you_message():
+    form = _FormErrors()
+    ResourceForm._validate_aed_file(form, _aed_csv(kod_pocztowy="bad"), error_field="file")
+    assert not hasattr(form, "aed_residents")

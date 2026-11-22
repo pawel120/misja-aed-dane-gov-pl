@@ -3380,6 +3380,10 @@ msgstr "Zasób oznaczony jako wykaz AED musi być plikiem csv, xls albo xlsx."
 msgid "Cannot read the table from the AED list file."
 msgstr "Nie udało się odczytać tabeli z pliku wykazu AED."
 
+#, python-format
+msgid "Thank you. Thanks to you, %(count)s residents have an AED within 200 m in open data."
+msgstr "Dziękujemy. Dzięki Tobie %(count)s mieszkańców ma AED w promieniu 200 m w otwartych danych."
+
 msgid "row"
 msgstr "wiersz"
 

@@ -32,6 +32,7 @@ from mcod.lib.widgets import (
 from mcod.organizations.models import Organization
 from mcod.regions.fields import RegionsMultipleChoiceField
 from mcod.resources.aed_constants import AED_FORM_MAX_SHOWN_ISSUES, ALLOWED_AED_INSTITUTIONS
+from mcod.resources.aed_utils import count_aed_residents
 from mcod.resources.aed_validation import MainAEDColumnsError, read_aed_file, validate_aed_df
 from mcod.resources.archives import is_password_protected_archive_file
 from mcod.resources.dga_constants import (
@@ -484,6 +485,9 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
                 "AED list: %(rejected)s of %(total)s rows did not pass validation. Fix them and upload the file again:"
             ) % {"rejected": result.rejected_count, "total": result.rejected_count + result.accepted_count}
             self.add_error(error_field, format_html("{}<ul>{}</ul>", message, rows))
+            return
+        # Pokazywane po zapisaniu zasobu (ResourceAdmin.save_model).
+        self.aed_residents = count_aed_residents(result.accepted)
 
     def _validate_dga_file(self, file: InMemoryUploadedFile, creating_resource: bool) -> None:
         extension: Optional[str] = guess_extension(file.content_type)

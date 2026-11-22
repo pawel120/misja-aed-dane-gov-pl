@@ -42,6 +42,8 @@ from mcod.resources.aed_constants import (
     AED_POLAND_LATITUDE,
     AED_POLAND_LONGITUDE,
     AED_REQUIRED_VALUE_COLUMNS,
+    AED_RESIDENTS_RADIUS_METERS,
+    AED_RESIDENTS_SQUARE_METERS,
     AED_WEEKDAY_COLUMNS,
     AED_YES_NO_COLUMNS,
     AED_YES_NO_VALUES,
@@ -385,14 +387,32 @@ class AEDProviderList:
 class MainAEDResult:
     main_df: pd.DataFrame
     results: List[Tuple[str, Optional[AEDValidationResult], Optional[str]]]
+    # Mieszkańcy w promieniu 200 m: per dostawca i łącznie (bez podwójnego liczenia).
+    residents: Dict[str, int] = field(default_factory=dict)
+    residents_total: Optional[int] = None
+
+    def add_residents(self, grid: "PopulationGrid") -> None:
+        for provider, result, _skip_reason in self.results:
+            if result is not None:
+                self.residents[provider] = grid.residents_for_aed_df(result.accepted)
+        self.residents_total = grid.residents_for_aed_df(self.main_df)
 
     def summary(self) -> str:
         lines = [f"Raport zbiorczy: {len(self.main_df)} AED od {self.main_df[MAIN_AED_PROVIDER_COLUMN].nunique()} dostawców."]
+        if self.residents_total is not None:
+            lines[0] += (
+                f" W promieniu {AED_RESIDENTS_RADIUS_METERS} m od tych AED mieszka "
+                f"{format_residents(self.residents_total)} osób."
+            )
         for provider, result, skip_reason in self.results:
             if skip_reason:
                 lines.append(f"- {provider}: wykaz pominięty – {skip_reason}")
-            else:
-                lines.append(f"- {provider}: przyjęte {result.accepted_count}, odrzucone {result.rejected_count}")
+                continue
+            line = f"- {provider}: przyjęte {result.accepted_count}, odrzucone {result.rejected_count}"
+            if provider in self.residents:
+                residents = format_residents(self.residents[provider])
+                line += f", {residents} mieszkańców w promieniu {AED_RESIDENTS_RADIUS_METERS} m"
+            lines.append(line)
         return "\n".join(lines)
 
 
@@ -466,3 +486,83 @@ def apply_aed_schema(tds: Optional[Dict[str, Any]], set_template_types: bool = F
     if set(geo) == {"b", "l", "label"}:
         tds["geo"] = geo
     return tds
+
+
+_SQUARE_KEY_FACTOR = 10_000_000
+
+
+@dataclass
+class PopulationGrid:
+    """
+    Siatka ludności 1 km w EPSG:3035 (spis 2021, Eurostat GISCO, dane GUS).
+    Wiersz ``i`` obejmuje y od ``y0 - i * cell`` do ``y0 - (i + 1) * cell``.
+    """
+
+    population: Any  # numpy.ndarray
+    x0: float
+    y0: float
+    cell: float
+
+    @classmethod
+    def from_npz(cls, path: str) -> "PopulationGrid":
+        import numpy as np
+
+        with np.load(path) as data:
+            return cls(
+                population=data["ludnosc"].astype("float64"),
+                x0=float(data["x0"]),
+                y0=float(data["y0"]),
+                cell=float(data["rozmiar"]),
+            )
+
+    def residents_within(
+        self,
+        latitudes: Iterable[float],
+        longitudes: Iterable[float],
+        radius: float = AED_RESIDENTS_RADIUS_METERS,
+    ) -> int:
+        """
+        Mieszkańcy w promieniu ``radius`` od dowolnego z punktów. Okrąg wokół
+        każdego punktu dzielimy na kwadraty 50 x 50 m na wspólnej siatce, a kwadrat
+        dostaje część ludności swojej komórki 1 km. Kwadraty sumujemy bez powtórzeń,
+        więc AED blisko siebie nie liczą tych samych ludzi dwa razy.
+        """
+        import numpy as np
+        from pyproj import Transformer
+
+        latitudes = np.asarray(list(latitudes), dtype="float64")
+        longitudes = np.asarray(list(longitudes), dtype="float64")
+        if latitudes.size == 0:
+            return 0
+        step = AED_RESIDENTS_SQUARE_METERS
+        n = int(radius // step) + 1
+        offsets = np.arange(-n, n + 1) * step
+        dx, dy = np.meshgrid(offsets, offsets)
+        inside = dx**2 + dy**2 <= radius**2
+        transformer = Transformer.from_crs("EPSG:4326", "EPSG:3035", always_xy=True)
+        x, y = transformer.transform(longitudes, latitudes)
+        square_x = np.round((np.asarray(x)[:, None] + dx[inside]) / step).astype(np.int64).ravel()
+        square_y = np.round((np.asarray(y)[:, None] + dy[inside]) / step).astype(np.int64).ravel()
+        keys = np.unique(square_x * _SQUARE_KEY_FACTOR + square_y)
+        centre_x = (keys // _SQUARE_KEY_FACTOR) * step
+        centre_y = (keys % _SQUARE_KEY_FACTOR) * step
+        rows = np.floor((self.y0 - centre_y) / self.cell).astype(np.int64)
+        cols = np.floor((centre_x - self.x0) / self.cell).astype(np.int64)
+        on_grid = (rows >= 0) & (rows < self.population.shape[0]) & (cols >= 0) & (cols < self.population.shape[1])
+        share = step * step / (self.cell * self.cell)
+        return int(round(float(self.population[rows[on_grid], cols[on_grid]].sum()) * share))
+
+    def residents_for_aed_df(self, df: pd.DataFrame, radius: float = AED_RESIDENTS_RADIUS_METERS) -> int:
+        """Mieszkańcy w zasięgu AED z wierszy wykazu, które przeszły walidację (``AEDValidationResult.accepted``)."""
+        if df.empty:
+            return 0
+        return self.residents_within(
+            df["szerokosc_geograficzna"].astype(float),
+            df["dlugosc_geograficzna"].astype(float),
+            radius,
+        )
+
+
+def format_residents(count: int) -> str:
+    """12797 -> „12 797” (twarda spacja, zapis polski)."""
+    return f"{count:,}".replace(",", "\u00a0")

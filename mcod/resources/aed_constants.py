@@ -87,6 +87,10 @@ AED_POLAND_LONGITUDE: Tuple[float, float] = (14.0, 24.2)
 AED_DUPLICATE_DISTANCE_METERS: float = 15.0
 # Elektrody lub bateria, których termin mija w tym horyzoncie, trafiają do ostrzeżeń.
 AED_EXPIRY_WARNING_DAYS: int = 90
+# Mieszkańcy w zasięgu AED (kampania „dzięki Tobie N mieszkańców ma AED w otwartych danych”):
+# okrąg o tym promieniu dzielimy na kwadraty o tym boku na siatce ludności 1 km.
+AED_RESIDENTS_RADIUS_METERS: int = 200
+AED_RESIDENTS_SQUARE_METERS: float = 50.0
 # Ile odrzuconych wierszy pokazać dostawcy w formularzu zasobu.
 AED_FORM_MAX_SHOWN_ISSUES: int = 10
 

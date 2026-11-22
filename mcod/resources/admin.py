@@ -35,6 +35,7 @@ from mcod.histories.models import LogEntry
 from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, SortableStackedInline, TrashMixin
 from mcod.lib.helpers import get_paremeters_from_post
 from mcod.organizations.models import Organization
+from mcod.resources.aed_validation import format_residents
 from mcod.resources.dga_constants import SAVE_CONFIRMATION_FIELD
 from mcod.resources.dga_utils import get_dga_resource_for_institution, save_temp_dga_file
 from mcod.resources.forms import (
@@ -933,6 +934,15 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
 
         if revalidate:
             obj.revalidate()
+
+        aed_residents = getattr(form, "aed_residents", None)
+        if aed_residents is not None:
+            self.message_user(
+                request,
+                _("Thank you. Thanks to you, %(count)s residents have an AED within 200 m in open data.")
+                % {"count": format_residents(aed_residents)},
+                level=messages.SUCCESS,
+            )
 
     def get_changeform_initial_data(self, request):
         """

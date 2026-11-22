@@ -1773,6 +1773,9 @@ MAIN_AED_DATASET_UPDATE_NOTIFICATION_EMAIL = env(
 )
 MAIN_AED_DATASET_CATEGORIES_TITLES = ["Zdrowie"]
 MAIN_AED_DATASET_TAGS_NAMES = ["AED", "defibrylatory", "ratownictwo"]
+# Siatka ludności 1 km ze spisu 2021 (Eurostat GISCO, dane GUS), przycięta do Polski,
+# do liczby mieszkańców w zasięgu AED w komunikatach panelu.
+AED_POPULATION_GRID_PATH = str(DATA_DIR.path("aed", "ludnosc_pl_1km_epsg3035.npz"))
 
 PASSWORD_RESET_PATH = "/user/reset-password/%s/"
 EMAIL_VALIDATION_PATH = "/user/verify-email/%s/"
