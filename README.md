@@ -90,7 +90,7 @@ Moduł AED nie ma własnego serwera ani bazy. Działa wewnątrz backendu dane.go
 **1. Dostawca zapisuje wykaz** (w panelu, w chwili wgrania pliku)
 
 ```mermaid
-%%{init: {"flowchart": {"htmlLabels": false}}}%%
+%%{init: {"htmlLabels": false, "flowchart": {"htmlLabels": false}}}%%
 flowchart LR
   P["Wykaz AED instytucji<br/>xlsx / csv według wzorca"]
   F["Formularz zasobu<br/>pole „Zawiera wykaz AED: TAK”<br/>forms.py"]
@@ -113,7 +113,7 @@ flowchart LR
 **2. Portal skleja wykazy w raport zbiorczy** (codziennie o 05:00 albo od razu akcją w panelu)
 
 ```mermaid
-%%{init: {"flowchart": {"htmlLabels": false}}}%%
+%%{init: {"htmlLabels": false, "flowchart": {"htmlLabels": false}}}%%
 flowchart TB
   DB[("Baza portalu<br/>wykazy AED wielu dostawców")]
   A["Akcja w panelu<br/>„Utwórz teraz zbiorczy wykaz AED”<br/>admin.py"]
