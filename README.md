@@ -1,21 +1,15 @@
 # Twoje dane, czyjeś serce
 
-**HackNation 2026 · Misja AED (Ministerstwo Cyfryzacji).**
-Każda instytucja, która ma defibrylator, publikuje w dane.gov.pl swój wykaz AED. Portal sprawdza każdy wiersz, dziękuje dostawcy liczbą mieszkańców w zasięgu jego urządzeń i raz na dobę skleja wszystkie wykazy w jeden zbiór z mapą.
-Nie budowaliśmy aplikacji obok portalu. Moduł „Wykaz AED” dopisaliśmy do otwartego kodu dane.gov.pl.
-
-> *Nie mów nam, gdzie jest AED. Powiedz wszystkim.*
-
-[Film](#-film-do-2-min) · [Prototyp](#wypróbuj-prototyp) · [Jak to działa](#jak-to-działa) · [Kampania](#kampania-twoje-dane-czyjeś-serce) · [Wymagania](#gdzie-sprawdzić-każde-wymaganie) · [Architektura](#architektura) · [Dla jury](DLA_JURY.md)
-
-## ▶ Film (do 2 min)
+**HackNation 2026 · Misja AED (Ministerstwo Cyfryzacji)**
 
 <!-- FILM: wgraj .mp4 przeciągając go do edytora README na github.com (do 10 MB),
      a adres https://github.com/user-attachments/assets/... wklej w osobnej linii zamiast obrazka niżej. -->
 
-[![Film: Twoje dane, czyjeś serce](.github/readme/plakat_filmu.jpg)](#-film-do-2-min)
+[![Film: Twoje dane, czyjeś serce](.github/readme/plakat_filmu.jpg)](#twoje-dane-czyjeś-serce)
 
 *Film jest w przygotowaniu.*
+
+[Prototyp](#wypróbuj-prototyp) · [Jak to działa](#jak-to-działa) · [Kampania](#kampania-twoje-dane-czyjeś-serce) · [Wymagania](#gdzie-sprawdzić-każde-wymaganie) · [Architektura](#architektura) · [Dla jury](DLA_JURY.md)
 
 ## Wypróbuj prototyp
 
