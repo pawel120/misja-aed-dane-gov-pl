@@ -687,6 +687,7 @@ class ChangeResourceForm(ResourceForm, UnEscapeWidgetMixin):
         data["has_high_value_data"] = instance.has_high_value_data
         data["has_research_data"] = instance.has_research_data
         data["contains_protected_data"] = instance.contains_protected_data
+        data["contains_aed_list"] = instance.contains_aed_list
         data["has_high_value_data_from_ec_list"] = instance.has_high_value_data_from_ec_list
         return data
 
@@ -801,6 +802,8 @@ class AddResourceInlineForm(AddResourceForm):
     # business rules (that only a single DGA resource exists in a Dataset)
     # would add too much technical complexity
     contains_protected_data = forms.CharField(initial="False", widget=forms.HiddenInput(), required=False)
+    # Wykaz AED też ustawia się w pełnym formularzu zasobu, nie w formularzu w linii.
+    contains_aed_list = forms.CharField(initial="False", widget=forms.HiddenInput(), required=False)
 
 
 class TrashResourceForm(forms.ModelForm):

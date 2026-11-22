@@ -131,6 +131,7 @@ def harvester_xml_expected_data():
                                 ("has_high_value_data_from_ec_list", None),
                                 ("has_research_data", None),
                                 ("contains_protected_data", False),
+                                ("contains_aed_list", False),
                             ]
                         ),
                         OrderedDict(
@@ -156,6 +157,7 @@ def harvester_xml_expected_data():
                                 ("has_high_value_data_from_ec_list", None),
                                 ("has_research_data", None),
                                 ("contains_protected_data", False),
+                                ("contains_aed_list", False),
                             ]
                         ),
                     ],
@@ -241,6 +243,7 @@ def harvester_ckan_expected_data():
                             ("has_high_value_data_from_ec_list", None),
                             ("has_research_data", None),
                             ("contains_protected_data", False),
+                            ("contains_aed_list", False),
                         ]
                     ),
                     OrderedDict(
@@ -266,6 +269,7 @@ def harvester_ckan_expected_data():
                             ("has_high_value_data_from_ec_list", None),
                             ("has_research_data", None),
                             ("contains_protected_data", False),
+                            ("contains_aed_list", False),
                         ]
                     ),
                 ],
