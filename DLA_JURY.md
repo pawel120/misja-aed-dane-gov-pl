@@ -33,9 +33,14 @@ To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
    „Wykaz defibrylatorów AED” i zakładkę **Mapa** – 775 AED od 5 dostawców na mapie portalu.
    Strona działa także na telefonie (układ portalu jest responsywny).
 1. Zaloguj się do panelu. Wejdź w **Dane → Resources**.
-2. Otwórz „Wykaz AED – Urząd Miasta Legionowo”. Pod polem DGA „Contains protected data list”
-   jest nasze pole **„Contains AED list: Tak”** z opisem mechanizmu.
+2. Otwórz „Wykaz AED – Urząd Miasta Legionowo”. Pod polem wykazu chronionych danych (DGA)
+   jest nasze pole **„Zawiera wykaz defibrylatorów AED: Tak”** z opisem mechanizmu.
+   Kliknij **„Zapisz i kontynuuj edycję”**: panel podziękuje dostawcy
+   („Dzięki Tobie 12 797 mieszkańców ma AED w promieniu 200 m w otwartych danych”).
+   Jeśli pole „Dane na dzień” jest puste, kliknij „Dzisiaj”.
 3. Otwórz „Wykaz AED – Fundacja Przykładowa (dane testowe)”: 4 urządzenia, w tym 3 z celowymi błędami.
+   Kliknij „Zapisz”: formularz nie zapisze zasobu i wypisze 3 błędne wiersze z powodami
+   (zamienione współrzędne, zły zapis godzin, zła wartość TAK/NIE).
 4. Na liście zasobów wybierz dowolny wiersz, z menu akcji wybierz
    **„Utwórz teraz zbiorczy wykaz defibrylatorów AED”** i kliknij „Wykonaj”.
    Komunikat pokaże: ile AED od ilu dostawców, ile wierszy odrzucono u każdego dostawcy.
