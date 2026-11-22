@@ -147,13 +147,29 @@ def get_or_create_main_aed_dataset() -> "Dataset":  # noqa: F821
 
 def publish_main_aed_resource(file_path: Path) -> "Resource":  # noqa: F821
     """
-    Publikuje nowy zasób raportu zbiorczego i usuwa poprzedni. Zapis pliku
-    uruchamia zwykłe walidacje portalu (plik, dane, widok tabelaryczny).
+    Publikuje raport zbiorczy. Pierwszy raz tworzy zasób, potem podmienia jego
+    plik tak jak panel portalu (ResourceFile.update_or_create + revalidate),
+    więc zasób i jego adres (także mapy) zostają te same. Zapis pliku uruchamia
+    zwykłe walidacje portalu (plik, dane, widok tabelaryczny).
     """
     Resource = apps.get_model("resources", "Resource")
     ResourceFile = apps.get_model("resources", "ResourceFile")
     dataset = get_or_create_main_aed_dataset()
-    old_resources = list(Resource.objects.filter(dataset=dataset))
+    existing = list(Resource.objects.filter(dataset=dataset).order_by("pk"))
+    if existing:
+        resource, extra = existing[0], existing[1:]
+        with transaction.atomic(), open(file_path, "rb") as file:
+            django_file = SimpleUploadedFile(name=os.path.basename(file.name), content=file.read(), content_type="text/csv")
+            resource.data_date = datetime.date.today()
+            resource.save()
+            ResourceFile.objects.update_or_create(resource=resource, is_main=True, defaults={"file": django_file})
+        resource.revalidate()
+        for old in extra:
+            old.delete()
+            logger.info("Duplicate main AED resource %s deleted.", old.pk)
+        logger.info("Updated main AED resource %s.", resource.pk)
+        return resource
+
     with transaction.atomic(), open(file_path, "rb") as file:
         resource = Resource.objects.create(
             title=settings.MAIN_AED_RESOURCE_DEFAULT_TITLE,
@@ -168,8 +184,5 @@ def publish_main_aed_resource(file_path: Path) -> "Resource":  # noqa: F821
         )
         django_file = SimpleUploadedFile(name=os.path.basename(file.name), content=file.read(), content_type="text/csv")
         ResourceFile.objects.create(resource=resource, is_main=True, file=django_file)
-    for old in old_resources:
-        old.delete()
-        logger.info("Previous main AED resource %s deleted.", old.pk)
     logger.info("Published main AED resource %s.", resource.pk)
     return resource
