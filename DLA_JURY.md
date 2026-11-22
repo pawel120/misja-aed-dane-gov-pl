@@ -15,7 +15,7 @@ mechanizm „Wykaz AED”, wzorowany na istniejącym w portalu wykazie chroniony
 
 | Co | Adres |
 |---|---|
-| **Strona publiczna portalu** (frontend dane.gov.pl bez zmian): raport zbiorczy z mapą | https://portal.145-239-30-81.sslip.io/pl/dataset/6 |
+| **Strona publiczna portalu** (frontend dane.gov.pl bez zmian): raport zbiorczy z mapą | https://portal.145-239-30-81.sslip.io/pl/dataset/6,wykaz-defibrylatorow-aed-raport-zbiorczy |
 | Wyszukiwarka portalu | https://portal.145-239-30-81.sslip.io/pl/search?q=defibrylator |
 | Panel administracyjny portalu (z modułem) | https://admin.145-239-30-81.sslip.io |
 | API portalu: zbiór raportu zbiorczego (Ministerstwo Cyfryzacji) | https://api.145-239-30-81.sslip.io/1.4/datasets/6 |
