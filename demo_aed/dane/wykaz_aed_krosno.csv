@@ -1,0 +1,22 @@
+id_urzadzenia,regon_dysponenta,nazwa_dysponenta,nazwa_miejsca,cecha_ulicy,nazwa_ulicy,nr_budynku,nr_lokalu,kod_pocztowy,miejscowosc,kod_terc,kod_simc,szerokosc_geograficzna,dlugosc_geograficzna,polozenie,opis_lokalizacji,dostep_24h,godziny_pn,godziny_wt,godziny_sr,godziny_cz,godziny_pt,godziny_so,godziny_nd,dostep_publiczny,urzadzenie_zamkniete,model_urzadzenia,data_ostatniego_przegladu,data_waznosci_elektrod,data_waznosci_baterii,telefon_kontaktowy,data_aktualizacji
+KRO-1,X,X,Zespół Krytych Pływalni,X,Jasna,X,X,38-400,Krosno,X,X,49.718809,21.720344,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-2,X,X,"Kampus Sportowo-dydaktyczny, portiernia",ulica,Stanisława Wyspiańskiego,20,X,38-400,Krosno,X,X,49.719089,21.711336,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-3,X,X,OSP Turaszówka,X,Rzeszowska,X,X,38-400,Krosno,X,X,49.721744,21.715091,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-4,X,X,OSP Białobrzegi,ulica,Mikołaja Kopernika,17,X,38-400,Krosno,X,X,49.706696,21.749909,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-5,X,X,Biuro Obsługi Klienta PGNiG,ulica,Augusta Lewakowskiego,11,X,38-400,Krosno,X,X,49.694658,21.756113,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-6,X,X,Regionalne Centrum Kultur Pogranicza,ulica,Kolejowa,1,X,38-400,Krosno,X,X,49.696380,21.754470,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-7,X,X,"Kampus Techniczny, portiernia",X,Franciszka Żwirki i Stanisława Wigury,X,X,38-400,Krosno,X,X,49.684573,21.746366,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-8,X,X,Rektorat Państwowa Akademia Nauk Stosowanych,ulica,Rynek,1,X,38-400,Krosno,X,X,49.694119,21.765759,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-9,X,X,Państwowa Akademia Nauk Stosowanych,ulica,Kazimierza Wielkiego,4,X,38-400,Krosno,X,X,49.692753,21.764685,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-10,X,X,Państwowa Akademia Nauk Stosowanych,ulica,Kazimierza Wielkiego,4,X,38-400,Krosno,X,X,49.692490,21.765049,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-11,X,X,MPGK Krosno,X,Aleksandra Fredry,X,X,38-400,Krosno,X,X,49.695999,21.770283,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-12,X,X,Wojewódzki Szpital Podkarpacki w Krośnie,ulica,Korczyńska,57,X,38-400,Krosno,X,X,49.701523,21.783098,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-13,X,X,Hala Mosir Bursaki,ulica,Bursaki,29,X,38-400,Krosno,X,X,49.692222,21.775601,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-14,X,X,Zespół Krytych Pływalni,ulica,Wojska Polskiego,45,X,38-400,Krosno,X,X,49.686104,21.775954,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-15,X,X,Regionalna Dyrekcja Lasów Państwowych w Krośnie,X,Bieszczadzka,X,X,38-400,Krosno,X,X,49.677513,21.773224,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-16,X,X,Centrum Handlowe VIVO!,ulica,Bieszczadzka,29,X,38-400,Krosno,X,X,49.676975,21.776108,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-17,X,X,"Kampus Politechniczny, portiernia",ulica,Profesora Doktora Jerzego Dmochowskiego,12,X,38-400,Krosno,X,X,49.669472,21.773166,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-18,X,X,OSP Suchodół,X,Grunwaldzka,X,X,38-400,Krosno,X,X,49.668850,21.763679,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-19,X,X,ZSP nr 4 im. Ignacego Łukasiewicza,ulica,Bohaterów Westerplatte,20,X,38-400,Krosno,X,X,49.684097,21.779275,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-22,X,X,Urząd Miasta Krosna,ulica,Lwowska,28a,X,38-400,Krosno,X,X,49.683990,21.771131,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19
+KRO-23,X,X,Dworzec,ulica,Naftowa,23,X,38-400,Krosno,X,X,49.695571,21.747440,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-02-19

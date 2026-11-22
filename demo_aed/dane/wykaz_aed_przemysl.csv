@@ -1,0 +1,22 @@
+id_urzadzenia,regon_dysponenta,nazwa_dysponenta,nazwa_miejsca,cecha_ulicy,nazwa_ulicy,nr_budynku,nr_lokalu,kod_pocztowy,miejscowosc,kod_terc,kod_simc,szerokosc_geograficzna,dlugosc_geograficzna,polozenie,opis_lokalizacji,dostep_24h,godziny_pn,godziny_wt,godziny_sr,godziny_cz,godziny_pt,godziny_so,godziny_nd,dostep_publiczny,urzadzenie_zamkniete,model_urzadzenia,data_ostatniego_przegladu,data_waznosci_elektrod,data_waznosci_baterii,telefon_kontaktowy,data_aktualizacji
+PRZ-744,X,X,Defibrylator (AED 9485) w ADM Centrum,ulica,Juliusza Słowackiego,12,X,37-700,Przemyśl,X,X,49.781210,22.775094,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-745,X,X,Defibrylator (AED 9556) w I Liecum Ogólnokształcącym w Przemyślu,ulica,Juliusza Słowackiego,21,X,37-700,Przemyśl,X,X,49.780639,22.777108,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-746,X,X,Defibrylator (AED 9579) w Szkole Podstawowej Nr 6 w Przemyślu,ulica,Generała Mieczysława Boruty Spiechowicza,1,X,37-700,Przemyśl,X,X,49.797269,22.758209,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,+48166779500,2024-11-06
+PRZ-747,X,X,Defibrylator (AED 7664) ul. Zamkowa 1,ulica,Zamkowa,1,X,37-700,Przemyśl,X,X,49.780647,22.768454,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-748,X,X,Defibrylator (AED 9469) Muzeum Dzwonów i Fajek,ulica,Władycze,3,X,37-700,Przemyśl,X,X,49.781852,22.773641,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-749,X,X,Defibrylator (AED 9471) Hala Sportowa POSiR,ulica,Adama Mickiewicza,30,X,37-700,Przemyśl,X,X,49.782322,22.783786,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-751,X,X,Defibrylator (AED 9531) Wybrzeże Ojca Świętego Jana Pawła II,ulica,Wybrzeże Ojca Świętego Jana Pawła II,70,X,37-700,Przemyśl,X,X,49.782701,22.748250,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-752,X,X,Defibrylator (AED 9509) 3 Maja 19 (DH Szpak),ulica,3 Maja,19,X,37-700,Przemyśl,X,X,49.787762,22.765906,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-753,X,X,Defibrylator (AED 9480) Plac Konstytucji 3 Maja 19 (Szalety Miejskie),ulica,Plac Konstytucji 3 Maja,X,X,37-700,Przemyśl,X,X,49.785488,22.766587,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-754,X,X,Defibrylator (AED 9508) ul. 22 Stycznia 8,ulica,22 Stycznia,8,X,37-700,Przemyśl,X,X,49.788798,22.774438,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-755,X,X,Defibrylator (AED 9479) - Przystanek Autobusowy (ul. Jagiellońska / pl. Pileckiego),ulica,Jagiellońska,X,X,37-700,Przemyśl,X,X,49.783947,22.771487,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-756,X,X,Defibrylator (AED 9481) - Targowisko Zielony Rynek,ulica,Sportowa,2,X,37-700,Przemyśl,X,X,49.785100,22.772605,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-757,X,X,Defibrylator (AED7639) Biblioteka Szkolna (ul. Aleksandra Dworskiego 98),ulica,Aleksandra Dworskiego,98,X,37-700,Przemyśl,X,X,49.778180,22.791299,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-758,X,X,Defibrylator (AED 7653) ul. Św. Jana Nepomucena 3,ulica,Św. Jana Nepomucena,3,X,37-700,Przemyśl,X,X,49.787028,22.761827,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-759,X,X,Defibrylator (AED 7622) ul. Biskupa Jakuba Glazera 9,ulica,Biskupa Jakuba Glazera,9,X,37-700,Przemyśl,X,X,49.786956,22.759332,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-760,X,X,Defibrylator (AED 7650) ul. Wodna 11 (Budynek Urzedu Miejskiego w Przemyślu),ulica,Wodna,11,X,37-700,Przemyśl,X,X,49.783874,22.769265,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-761,X,X,Defibrylator (AED 7660) Plac Legionów (obok dworca PKP),ulica,Plac Legionów,6,X,37-700,Przemyśl,X,X,49.783769,22.779250,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-762,X,X,Defibrylator (AED7646) - Rynek 1 (Gmach Główny Urzędu Miejskiego),ulica,Rynek,1,X,37-700,Przemyśl,X,X,49.782744,22.769001,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-763,X,X,Defibrylator (AED 7654) Aleje XXV Polskiej Drużyny Strzeleckiej 1 (PCKiN ZAMEK),ulica,Aleje XXV Polskiej Drużyny Strzeleckiej,1,X,37-700,Przemyśl,X,X,49.780317,22.765693,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-764,X,X,Defibrylator (AED 7639) Grunwaldzka 81 (Szkoła Podstawowa Nr 16 w Przemyslu),ulica,Grunwaldzka,81,X,37-700,Przemyśl,X,X,49.784404,22.754941,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
+PRZ-765,X,X,Defibrylator (AED 7649) Bpa. Jakuba Glazera 44 (II Liceum Ogólnoksztalcące w Przemyślu),ulica,Bpa. Jakuba Glazera,44,X,37-700,Przemyśl,X,X,49.791672,22.753113,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06

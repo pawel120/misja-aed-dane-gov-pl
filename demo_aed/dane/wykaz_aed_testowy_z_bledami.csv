@@ -1,0 +1,5 @@
+id_urzadzenia,regon_dysponenta,nazwa_dysponenta,nazwa_miejsca,cecha_ulicy,nazwa_ulicy,nr_budynku,nr_lokalu,kod_pocztowy,miejscowosc,kod_terc,kod_simc,szerokosc_geograficzna,dlugosc_geograficzna,polozenie,opis_lokalizacji,dostep_24h,godziny_pn,godziny_wt,godziny_sr,godziny_cz,godziny_pt,godziny_so,godziny_nd,dostep_publiczny,urzadzenie_zamkniete,model_urzadzenia,data_ostatniego_przegladu,data_waznosci_elektrod,data_waznosci_baterii,telefon_kontaktowy,data_aktualizacji
+T-1,X,Fundacja Przykładowa (dane testowe),Hala targowa,X,X,X,X,X,Bydgoszcz,X,X,53.1385,18.0566,wewnątrz,X,NIE,08:00-16:00,X,X,X,X,X,X,TAK,X,X,X,2026-12-15,X,X,X
+T-2,X,Fundacja Przykładowa (dane testowe),Dworzec,X,X,X,X,X,Bydgoszcz,X,X,18.0040,53.1350,wewnątrz,X,NIE,08:00-16:00,X,X,X,X,X,X,TAK,X,X,X,X,X,X,X
+T-3,X,Fundacja Przykładowa (dane testowe),Biblioteka,X,X,X,X,X,Bydgoszcz,X,X,53.1230,18.0084,wewnątrz,X,NIE,pn-pt 8-16,X,X,X,X,X,X,TAK,X,X,X,X,X,X,X
+T-4,X,Fundacja Przykładowa (dane testowe),Basen,X,X,X,X,X,Bydgoszcz,X,X,53.1300,18.0200,wewnątrz,X,tak?,08:00-16:00,X,X,X,X,X,X,TAK,X,X,X,X,X,X,X

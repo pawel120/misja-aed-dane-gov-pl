@@ -1,0 +1,76 @@
+# Lekki portal do demo wykazu AED (HackNation 2026).
+# Uruchomienie:
+#   docker compose -f docker-compose.local.yml -f docker-compose.aed.yml build mcod-db mcod-redis mcod-rabbitmq mcod-elasticsearch mcod-rdfdb mcod-local-admin
+#   docker compose -f docker-compose.local.yml -f docker-compose.aed.yml up -d mcod-local-admin mcod-local-api mcod-local-celery
+# Wszystkie porty tylko na 127.0.0.1. Bez nginx, Discourse, CMS, frontendu i Flower.
+services:
+  mcod-db:
+    ports: !override
+      - "127.0.0.1:5432:5432"
+  mcod-rabbitmq:
+    ports: !override
+      - "127.0.0.1:15672:15672"
+  mcod-redis:
+    ports: !reset []
+  mcod-elasticsearch:
+    ports: !override
+      - "127.0.0.1:9200:9200"
+    environment: !override
+      - discovery.type=single-node
+      - node.name=mcod-elasticsearch
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms768m -Xmx768m
+  mcod-smtp:
+    ports: !override
+      - "127.0.0.1:8025:8025"
+  mcod-rdfdb:
+    ports: !reset []
+  mcod-local-admin:
+    image: mcod-app:local
+    volumes:
+      - ./demo_aed:/usr/src/mcod_backend/demo_aed
+    depends_on: !override
+      - mcod-db
+      - mcod-rabbitmq
+      - mcod-redis
+      - mcod-elasticsearch
+      - mcod-rdfdb
+      - mcod-smtp
+    environment:
+      DJANGO_SETTINGS_MODULE: mcod.settings.aed_demo
+      DISCOURSE_FORUM_ENABLED: "false"
+    ports:
+      - "127.0.0.1:8001:8001"
+    mem_limit: 1500m
+  mcod-local-api:
+    image: mcod-app:local
+    depends_on: !override
+      - mcod-db
+      - mcod-redis
+      - mcod-elasticsearch
+    environment:
+      DJANGO_SETTINGS_MODULE: mcod.settings.aed_demo
+      DISCOURSE_FORUM_ENABLED: "false"
+    ports:
+      - "127.0.0.1:8000:8000"
+    mem_limit: 1000m
+  mcod-local-celery:
+    image: mcod-app:local
+    depends_on: !override
+      - mcod-db
+      - mcod-rabbitmq
+      - mcod-redis
+      - mcod-elasticsearch
+    environment:
+      DJANGO_SETTINGS_MODULE: mcod.settings.aed_demo
+      DISCOURSE_FORUM_ENABLED: "false"
+      CELERY_INSTALL_CERTIFICATES: 0
+    mem_limit: 1500m
+  mcod-local-run:
+    image: mcod-app:local
+    volumes:
+      - ./demo_aed:/usr/src/mcod_backend/demo_aed
+    environment:
+      DJANGO_SETTINGS_MODULE: mcod.settings.aed_demo
+      DISCOURSE_FORUM_ENABLED: "false"
