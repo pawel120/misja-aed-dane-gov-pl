@@ -60,6 +60,7 @@ To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
 | Format odczytywalny maszynowo | raport zbiorczy: CSV UTF-8, API JSON | krok 5–6 |
 | Kod źródłowy | to repozytorium | `git log`, testy niżej |
 | Prototyp | strona publiczna i panel pod adresami wyżej | kroki 0–7 |
+| Logotyp (jpg, png, pdf, format otwarty) i księga znaku (pdf) | `kampania/`: logo pełne, pionowe i znak mały w wersjach kolor, czerń, negatyw (SVG, PNG, JPG, PDF); `kampania/ksiega_znaku.pdf` | otwórz pliki |
 | Responsywność, WCAG | strona publiczna portalu (ich frontend: przełączniki kontrastu i wielkości czcionki) | otwórz na telefonie |
 
 ## Kroki użytkownika
@@ -128,6 +129,14 @@ naszych poleceniach w lokalnym repozytorium. Decyzje należały do zespołu: wyb
 kolumnach i położenie urządzenia), dobór źródeł danych, nazwa i hasło kampanii. Każdą zmianę sprawdzaliśmy
 na działającym portalu (zrzuty ekranu w prezentacji) i testami; przegląd kodu przed oddaniem wykrył i poprawił
 błędy w obsłudze plików z Excela i w komunikatach formularza.
+
+## Kampania „Twoje dane, czyjeś serce”
+
+Znak to serce narysowane jak arkusz danych: każda czerwona kratka to AED, którego dane trafiły na dane.gov.pl.
+Koncepcja, kolorystyka, pole ochronne, minimalna wielkość, niedozwolone użycia i zastosowania są w
+`kampania/ksiega_znaku.pdf`. Kampania jest wpięta w portal: po zapisaniu wykazu dostawca dostaje w panelu
+podziękowanie z liczbą mieszkańców, którzy dzięki niemu mają AED w promieniu 200 m w otwartych danych
+(krok 2 wyżej); tę liczbę można przenieść na plakat z księgi znaku.
 
 ## Dane
 
