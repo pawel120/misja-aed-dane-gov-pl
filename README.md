@@ -17,7 +17,7 @@ Zbiór „Wykaz defibrylatorów AED – raport zbiorczy” na stronie publicznej
 | Co | Adres |
 |---|---|
 | Wyszukiwarka portalu | https://portal.145-239-30-81.sslip.io/pl/search?q=defibrylator |
-| Panel administracyjny z modułem AED | https://admin.145-239-30-81.sslip.io (link „wejście jednym kliknięciem” i konto zapasowe są w zgłoszeniu HackTribe) |
+| Panel administracyjny z modułem AED, **bez logowania** | https://admin.145-239-30-81.sslip.io/aed-demo/wejdz/YKp08CmJ4xh2HM23agSja420mZ0VG8jI/ (wpuszcza od razu na konto jury, działa do 22.11.2026, 23:59) |
 | API: punkty mapy | https://api.145-239-30-81.sslip.io/1.4/resources/8/geo |
 | API: wiersze z wyszukiwaniem | https://api.145-239-30-81.sslip.io/1.4/resources/8/data?q=Krosno |
 

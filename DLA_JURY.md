@@ -23,7 +23,7 @@ mechanizm „Wykaz AED”, wzorowany na istniejącym w portalu wykazie chroniony
 | API portalu: zbiór raportu zbiorczego (Ministerstwo Cyfryzacji) | https://api.145-239-30-81.sslip.io/1.4/datasets/6 |
 | API portalu: punkty mapy raportu zbiorczego | https://api.145-239-30-81.sslip.io/1.4/resources/8/geo (zasób raportu jest stały; codzienne przeliczenie podmienia tylko jego plik) |
 | API portalu: wiersze raportu z wyszukiwaniem | https://api.145-239-30-81.sslip.io/1.4/resources/8/data?q=Krosno |
-| **Wejście do panelu jednym kliknięciem** | link podany w zgłoszeniu (HackTribe); działa wielokrotnie, do 22.11.2026, 23:59; loguje na konto jury bez wpisywania hasła |
+| **Panel bez logowania** | https://admin.145-239-30-81.sslip.io/aed-demo/wejdz/YKp08CmJ4xh2HM23agSja420mZ0VG8jI/ ; działa wielokrotnie, do 22.11.2026, 23:59; wpuszcza na konto jury bez wpisywania hasła |
 
 To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
 
