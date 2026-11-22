@@ -15,7 +15,7 @@ from django.template.defaultfilters import truncatewords, yesno
 from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.urls import path
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import (
@@ -252,6 +252,22 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
     soft_delete = True
     TYPE_FILTER = TypeFilter
     is_inlines_js_upgraded = True
+    actions = ["create_main_aed_report"]
+
+    def create_main_aed_report(self, request, queryset):
+        """
+        Tworzy od razu zbiorczy wykaz AED ze wszystkich opublikowanych wykazów AED
+        (bez czekania na nocne zadanie). Zaznaczone wiersze nie mają znaczenia.
+        """
+        if not request.user.is_superuser:
+            self.message_user(request, "Raport zbiorczy AED może utworzyć tylko administrator.", level=messages.ERROR)
+            return
+        from mcod.resources.tasks.aed import create_main_aed_resource_task
+
+        summary = create_main_aed_resource_task.apply().get()
+        self.message_user(request, mark_safe("<br>".join(escape(line) for line in summary.splitlines())))
+
+    create_main_aed_report.short_description = "Utwórz teraz zbiorczy wykaz defibrylatorów AED"
 
     def get_suit_form_tabs(self, obj=None):
         tabs = [

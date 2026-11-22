@@ -84,3 +84,34 @@ ADMIN_URL = env("ADMIN_URL", default="http://127.0.0.1:8001")
 # local.py.sample dodaje "timeout" do ustawień indeksu; Elasticsearch 6.8 odrzuca to ustawienie.
 ELASTICSEARCH_DSL_INDEX_SETTINGS = {"number_of_shards": 1, "number_of_replicas": 0}
 ELASTICSEARCH_HISTORIES_IDX_SETTINGS = {"number_of_shards": 1, "number_of_replicas": 0}
+
+
+class AEDDemoBannerMiddleware:
+    """Pasek na każdej stronie HTML: to kopia demonstracyjna, nie serwis dane.gov.pl."""
+
+    BANNER = (
+        '<div style="position:sticky;top:0;z-index:99999;background:#b00020;color:#fff;'
+        'font:600 14px/1.4 sans-serif;padding:8px 12px;text-align:center">'
+        "Środowisko testowe HackNation 2026 – kopia otwartego kodu portalu z modułem "
+        "„Wykaz AED”. To nie jest serwis dane.gov.pl.</div>"
+    )
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        content_type = response.get("Content-Type", "")
+        if "text/html" in content_type and not getattr(response, "streaming", False):
+            body = response.content.decode(response.charset or "utf-8", errors="ignore")
+            if "<body" in body and "Środowisko testowe HackNation" not in body:
+                start = body.index("<body")
+                end = body.index(">", start) + 1
+                body = body[:end] + self.BANNER + body[end:]
+                response.content = body.encode(response.charset or "utf-8")
+                if response.has_header("Content-Length"):
+                    response["Content-Length"] = str(len(response.content))
+        return response
+
+
+MIDDLEWARE = list(MIDDLEWARE) + ["mcod.settings.aed_demo.AEDDemoBannerMiddleware"]  # noqa: F405
