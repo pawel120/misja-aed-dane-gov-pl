@@ -16,7 +16,8 @@ mechanizm „Wykaz AED”, wzorowany na istniejącym w portalu wykazie chroniony
 | Co | Adres |
 |---|---|
 | Panel administracyjny portalu (z modułem) | https://admin.145-239-30-81.sslip.io |
-| API portalu: raport zbiorczy jako punkty mapy | https://api.145-239-30-81.sslip.io/1.4/resources/6/geo |
+| API portalu: zbiór raportu zbiorczego (Ministerstwo Cyfryzacji) | https://api.145-239-30-81.sslip.io/1.4/datasets/6 |
+| API portalu: punkty mapy raportu zbiorczego | https://api.145-239-30-81.sslip.io/1.4/resources/ID/geo (ID = numer zasobu „Wykaz defibrylatorów AED” z panelu; zmienia się po każdym przeliczeniu raportu) |
 | Konto dla jury | e-mail i hasło podane w zgłoszeniu (HackTribe) |
 
 To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
@@ -32,7 +33,7 @@ To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
    Komunikat pokaże: ile AED od ilu dostawców, ile wierszy odrzucono u każdego dostawcy.
 5. Wejdź w **Dane → Datasets → „Wykaz defibrylatorów AED – raport zbiorczy”** (instytucja: Ministerstwo Cyfryzacji).
    Zasób „Wykaz defibrylatorów AED” ma plik CSV, widok tabeli i mapę.
-6. Otwórz w przeglądarce API `/1.4/resources/6/geo` – punkty mapy z raportu zbiorczego.
+6. Otwórz w przeglądarce API `/1.4/resources/ID/geo` (ID zasobu z kroku 5) – punkty mapy z raportu zbiorczego.
 7. (Opcjonalnie) Dodaj zasób z plikiem `demo_aed/dane/wykaz_aed_testowy_z_bledami.csv`
    i zaznacz „Contains AED list: Tak” – formularz nie zapisze pliku i wypisze błędy w wierszach.
 
@@ -55,6 +56,7 @@ przepisane na wzorcowy zakres danych, oraz jeden wykaz testowy z celowymi błęd
 ## Ograniczenia
 
 - Strona publiczna portalu (frontend Angular) nie jest uruchomiona; mapę raportu pokazuje API i panel.
+- Wyszukiwarka API (`/datasets/ID/resources`) w demo zwraca błąd indeksu Elasticsearch; szczegóły zbioru i zasobu działają.
 - Raport zbiorczy powstaje w zadaniu Celery o 05:00; w demo jury uruchamia go akcją w panelu.
 - Dane demo to 5 dostawców; w Polsce wykazy AED publikuje dziś kilkanaście miast, w różnych formatach.
 - Godziny dostępności w danych miast są nieustrukturyzowane; w wykazach demo wpisaliśmy „24h” tylko tam,
