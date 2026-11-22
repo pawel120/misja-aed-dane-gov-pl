@@ -56,7 +56,7 @@ admin.state = "active"
 admin.save()
 
 owner_pk = int(settings.MAIN_AED_DATASET_OWNER_ORGANIZATION_PK)
-mc = Organization.objects.filter(pk=owner_pk).first()
+mc = Organization.raw.filter(pk=owner_pk).first()
 if not mc:
     mc = Organization.objects.create(
         pk=owner_pk,
@@ -74,7 +74,7 @@ if not category:
     print(f"Utworzono kategorię {category.title}")
 
 for plik, nazwa, typ, regon, licencja in DOSTAWCY:
-    organization = Organization.objects.filter(title=nazwa).first()
+    organization = Organization.raw.filter(title=nazwa).first()
     if not organization:
         organization = Organization.objects.create(
             title=nazwa,
@@ -86,7 +86,7 @@ for plik, nazwa, typ, regon, licencja in DOSTAWCY:
         organization.users.add(admin)
         print(f"Utworzono instytucję {nazwa}")
 
-    dataset = Dataset.objects.filter(organization=organization, title="Defibrylatory AED").first()
+    dataset = Dataset.raw.filter(organization=organization, title="Defibrylatory AED").first()
     if not dataset:
         dataset = Dataset.objects.create(
             title="Defibrylatory AED",
@@ -102,7 +102,7 @@ for plik, nazwa, typ, regon, licencja in DOSTAWCY:
         dataset.categories.set([category])
         print(f"Utworzono zbiór {nazwa}: {dataset.title}")
 
-    if Resource.objects.filter(dataset=dataset, contains_aed_list=True).exists():
+    if Resource.raw.filter(dataset=dataset, contains_aed_list=True).exists():
         continue
     resource = Resource.objects.create(
         title=f"Wykaz AED – {nazwa}",
@@ -121,4 +121,4 @@ for plik, nazwa, typ, regon, licencja in DOSTAWCY:
     )
     print(f"Wgrano zasób {resource.pk}: {resource.title}")
 
-print("Gotowe. Status walidacji zasobów: Resource.objects.filter(contains_aed_list=True).values_list('pk', 'file_tasks_last_status', 'data_tasks_last_status', 'link_tasks_last_status')")
+print("Gotowe. Status walidacji zasobów: Resource.raw.filter(contains_aed_list=True).values_list('pk', 'file_tasks_last_status', 'data_tasks_last_status', 'link_tasks_last_status')")

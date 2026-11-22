@@ -42,6 +42,18 @@ def get_main_aed_dataset() -> Optional["Dataset"]:  # noqa: F821
     )
 
 
+def is_aed_resource(resource: "Resource") -> bool:  # noqa: F821
+    """Wykaz AED dostawcy albo raport zbiorczy: oba mają kolumny wzorca AED."""
+    if resource.contains_aed_list:
+        return True
+    dataset = resource.dataset
+    return bool(
+        dataset
+        and dataset.title == settings.MAIN_AED_DATASET_DEFAULT_TITLE
+        and str(dataset.organization_id) == str(settings.MAIN_AED_DATASET_OWNER_ORGANIZATION_PK)
+    )
+
+
 def get_all_aed_resources_sorted_by_organizations() -> QuerySet:
     """Opublikowane wykazy AED, które przeszły walidację pliku, danych i linku."""
     Resource = apps.get_model("resources", "Resource")

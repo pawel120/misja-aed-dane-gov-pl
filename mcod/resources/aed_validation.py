@@ -27,7 +27,7 @@ import io
 import math
 import re
 from dataclasses import dataclass, field
-from typing import BinaryIO, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, BinaryIO, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import pandas as pd
 
@@ -379,3 +379,36 @@ def build_main_aed_df(lists: Iterable[AEDProviderList], today: Optional[datetime
     main_df.insert(0, "Lp.", range(1, len(main_df) + 1))
     main_df = main_df[MAIN_AED_COLUMNS]
     return MainAEDResult(main_df=main_df, results=results)
+
+
+# Kolumny mapy portalu (GEO_TYPES): szerokość „b”, długość „l”, etykieta „label”.
+AED_SCHEMA_GEO: Dict[str, str] = {
+    "szerokosc_geograficzna": "b",
+    "dlugosc_geograficzna": "l",
+    "nazwa_miejsca": "label",
+}
+AED_SCHEMA_NUMBER_COLUMNS = ("szerokosc_geograficzna", "dlugosc_geograficzna", "Lp.")
+
+
+def apply_aed_schema(tds: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """
+    Ustawia w schemacie tabeli typy kolumn ze wzorca AED zamiast zgadywanych
+    z pierwszych wierszy (np. „nr_budynku” to tekst: „25/27”, „2A”) i oznacza
+    kolumny mapy, żeby portal od razu rysował punkty AED.
+    """
+    if not tds or not tds.get("fields"):
+        return tds
+    known = set(MAIN_AED_COLUMNS)
+    geo: Dict[str, Dict[str, Any]] = {}
+    for index, schema_field in enumerate(tds["fields"]):
+        name = str(schema_field.get("name", "")).strip()
+        if name not in known:
+            continue
+        schema_field["type"] = "number" if name in AED_SCHEMA_NUMBER_COLUMNS else "string"
+        schema_field["format"] = "default"
+        if name in AED_SCHEMA_GEO:
+            schema_field["geo"] = AED_SCHEMA_GEO[name]
+            geo[AED_SCHEMA_GEO[name]] = {"col_name": schema_field["name"], "col_index": index}
+    if set(geo) == {"b", "l", "label"}:
+        tds["geo"] = geo
+    return tds

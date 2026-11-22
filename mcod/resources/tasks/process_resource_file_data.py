@@ -9,6 +9,8 @@ from elasticsearch.helpers.errors import BulkIndexError
 from sentry_sdk import set_tag
 
 from mcod.core.tasks import extended_shared_task
+from mcod.resources.aed_utils import is_aed_resource
+from mcod.resources.aed_validation import apply_aed_schema
 from mcod.resources.indexed_data import ResourceDataValidationError
 from mcod.resources.tasks.common import (
     save_task_result_for_resource_after_task_failure,
@@ -25,6 +27,9 @@ def _resolve_tabular_data_schema(resource: "Resource") -> Dict[str, Any]:
     tds = resource.tabular_data_schema
     if not tds or tds.get("missingValues") != resource.special_signs_symbols_list:
         tds = resource.data.get_schema(revalidate=True)
+
+    if is_aed_resource(resource):
+        tds = apply_aed_schema(tds)
 
     if resource.from_resource and resource.from_resource.tabular_data_schema:
         old_fields = deepcopy(resource.from_resource.tabular_data_schema.get("fields"))

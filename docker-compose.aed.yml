@@ -5,14 +5,22 @@
 # Wszystkie porty tylko na 127.0.0.1. Bez nginx, Discourse, CMS, frontendu i Flower.
 services:
   mcod-db:
+    networks: !override
+      backend: {}
     ports: !override
       - "127.0.0.1:5432:5432"
   mcod-rabbitmq:
+    networks: !override
+      backend: {}
     ports: !override
       - "127.0.0.1:15672:15672"
   mcod-redis:
+    networks: !override
+      backend: {}
     ports: !reset []
   mcod-elasticsearch:
+    networks: !override
+      backend: {}
     ports: !override
       - "127.0.0.1:9200:9200"
     environment: !override
@@ -22,11 +30,17 @@ services:
       - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms768m -Xmx768m
   mcod-smtp:
+    networks: !override
+      backend: {}
     ports: !override
       - "127.0.0.1:8025:8025"
   mcod-rdfdb:
+    networks: !override
+      backend: {}
     ports: !reset []
   mcod-local-admin:
+    networks: !override
+      backend: {}
     image: mcod-app:local
     volumes:
       - ./demo_aed:/usr/src/mcod_backend/demo_aed
@@ -44,6 +58,8 @@ services:
       - "127.0.0.1:8001:8001"
     mem_limit: 1500m
   mcod-local-api:
+    networks: !override
+      backend: {}
     image: mcod-app:local
     depends_on: !override
       - mcod-db
@@ -56,6 +72,8 @@ services:
       - "127.0.0.1:8000:8000"
     mem_limit: 1000m
   mcod-local-celery:
+    networks: !override
+      backend: {}
     image: mcod-app:local
     depends_on: !override
       - mcod-db
@@ -74,3 +92,12 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: mcod.settings.aed_demo
       DISCOURSE_FORUM_ENABLED: "false"
+
+# Sieć 172.18.18.0/24 z oryginału bywa zajęta przez inne projekty Dockera;
+# demo używa własnej podsieci i nazw kontenerów zamiast stałych adresów IP.
+networks:
+  backend:
+    ipam: !override
+      driver: default
+      config:
+        - subnet: 172.29.29.0/24

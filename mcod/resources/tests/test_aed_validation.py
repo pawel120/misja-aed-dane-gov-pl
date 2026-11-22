@@ -14,6 +14,7 @@ from mcod.resources.aed_constants import (
 )
 from mcod.resources.aed_validation import (
     AEDProviderList,
+    apply_aed_schema,
     MainAEDMissingRequiredColumnError,
     build_main_aed_df,
     distance_meters,
@@ -212,3 +213,31 @@ class TestReadAedFile:
         with open(path, "rb") as file:
             df = read_aed_file(file, "xlsx")
         assert validate_aed_df(df, today=TODAY).accepted_count == 1
+
+
+def test_apply_aed_schema_sets_template_types_and_map_columns():
+    tds = {
+        "fields": [
+            {"name": "id_urzadzenia", "type": "integer", "format": "default"},
+            {"name": "nr_budynku", "type": "integer", "format": "default"},
+            {"name": "szerokosc_geograficzna", "type": "string", "format": "default"},
+            {"name": "dlugosc_geograficzna", "type": "number", "format": "default"},
+            {"name": "nazwa_miejsca", "type": "string", "format": "default"},
+            {"name": "inna_kolumna", "type": "integer", "format": "default"},
+        ]
+    }
+    result = apply_aed_schema(tds)
+    types = {f["name"]: f["type"] for f in result["fields"]}
+    assert types == {
+        "id_urzadzenia": "string",
+        "nr_budynku": "string",
+        "szerokosc_geograficzna": "number",
+        "dlugosc_geograficzna": "number",
+        "nazwa_miejsca": "string",
+        "inna_kolumna": "integer",
+    }
+    assert result["geo"] == {
+        "b": {"col_name": "szerokosc_geograficzna", "col_index": 2},
+        "l": {"col_name": "dlugosc_geograficzna", "col_index": 3},
+        "label": {"col_name": "nazwa_miejsca", "col_index": 4},
+    }
