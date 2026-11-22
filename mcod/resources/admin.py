@@ -354,6 +354,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
             )
             has_research_data = ["has_research_data"] if not obj.is_imported else ["has_research_data_info"]
             contains_protected_data = ["contains_protected_data"] if not obj.is_imported else ["contains_protected_data_info"]
+            contains_aed_list = ["contains_aed_list"] if not obj.is_imported else ["contains_aed_list_info"]
             extra_fields = []
             if obj.type == RESOURCE_TYPE_WEBSITE or obj.forced_api_type:
                 extra_fields = ["forced_api_type"]
@@ -406,6 +407,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
                             *has_high_value_data_from_ec_list,
                             *has_research_data,
                             *contains_protected_data,
+                            *contains_aed_list,
                             "status",
                             *special_signs,
                             "show_tabular_view",
@@ -536,6 +538,13 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
                         None,
                         {
                             "classes": ("suit-tab", "suit-tab-general"),
+                            "fields": ("contains_aed_list",),
+                        },
+                    ),
+                    (
+                        None,
+                        {
+                            "classes": ("suit-tab", "suit-tab-general"),
                             "fields": ("status", "from_resource"),
                         },
                     ),
@@ -632,6 +641,7 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
                 "has_high_value_data_from_ec_list_info",
                 "has_research_data_info",
                 "contains_protected_data_info",
+                "contains_aed_list_info",
                 "language",
                 "related_resource",
             )
@@ -846,6 +856,11 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
         return yesno(obj.contains_protected_data, "Tak,Nie,-")
 
     contains_protected_data_info.short_description = _("Contains protected data list")
+
+    def contains_aed_list_info(self, obj):
+        return yesno(obj.contains_aed_list, "Tak,Nie,-")
+
+    contains_aed_list_info.short_description = _("Contains AED list")
 
     def is_auto_data_date_info(self, obj):
         return yesno(obj.is_auto_data_date, "Tak,Nie,-")

@@ -31,6 +31,8 @@ from mcod.lib.widgets import (
 from mcod.organizations.models import Organization
 from mcod.regions.fields import RegionsMultipleChoiceField
 from mcod.resources.archives import is_password_protected_archive_file
+from mcod.resources.aed_constants import AED_FORM_MAX_SHOWN_ISSUES, ALLOWED_AED_INSTITUTIONS
+from mcod.resources.aed_validation import MainAEDMissingRequiredColumnError, read_aed_file, validate_aed_df
 from mcod.resources.dga_constants import (
     ALLOWED_DGA_INSTITUTIONS,
     DGA_COLUMNS,
@@ -264,6 +266,19 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
         ),
         widget=CheckboxSelect(attrs={"class": "inline"}),
     )
+    contains_aed_list = forms.ChoiceField(
+        required=True,
+        initial=False,
+        label=_("Contains AED list").capitalize(),
+        choices=[(True, _("Yes")), (False, _("No"))],
+        help_text=(
+            "Wskazanie TAK dla opublikowanego zasobu oznacza, że zasób jest "
+            "aktualnym wykazem defibrylatorów AED tej instytucji. Portal raz na "
+            "dobę dołącza go do zbiorczego wykazu AED. Plik (csv, xls, xlsx) musi "
+            "mieć kolumny wzorcowego zakresu danych o AED."
+        ),
+        widget=CheckboxSelect(attrs={"class": "inline"}),
+    )
     confirm_save = forms.CharField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
@@ -333,6 +348,13 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             if not is_main_dga_resource and organization:
                 self._remove_dga_flag_from_current_dga_resource_if_needed(data, organization)
 
+        if data.get("contains_aed_list") == "True":
+            if organization:
+                self._validate_institution_when_contains_aed_list(organization)
+            aed_file = data.get("file")
+            if isinstance(aed_file, UploadedFile):
+                self._validate_aed_file(aed_file)
+
         self.validate_high_value_data_flags_conflict(data)
         if organization:
             self._validate_high_value_data_from_ec_list_organization(data, organization)
@@ -397,6 +419,50 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             self.add_error(
                 "contains_protected_data",
                 _("To select YES here, above select the dataset of a government or local government institution."),
+            )
+
+    def _validate_institution_when_contains_aed_list(self, organization: Organization) -> None:
+        if organization.institution_type not in ALLOWED_AED_INSTITUTIONS:
+            self.add_error(
+                "contains_aed_list",
+                "Wykaz AED może prowadzić samorząd, administracja rządowa, podmiot prywatny albo inna instytucja.",
+            )
+
+    def _validate_aed_file(self, file: UploadedFile) -> None:
+        """Własne walidacje AED: dostawca od razu widzi, które wiersze trzeba poprawić."""
+        extension: Optional[str] = guess_extension(file.content_type or "")
+        extension = extension[1:] if extension else os.path.splitext(file.name)[1][1:].lower()
+        if extension not in DGA_RESOURCE_EXTENSIONS:
+            self.add_error("file", "Wykaz AED musi być plikiem csv, xls albo xlsx.")
+            return
+        try:
+            df = read_aed_file(file, extension)
+        except Exception as exc:
+            logger.warning(f"Cannot read AED list file: {exc}")
+            df = None
+        finally:
+            file.seek(0)
+        if df is None:
+            self.add_error("file", "Nie udało się odczytać tabeli z pliku wykazu AED.")
+            return
+        try:
+            result = validate_aed_df(df)
+        except MainAEDMissingRequiredColumnError as exc:
+            self.add_error("file", f"Wykaz AED nie ma kolumn wzorcowego zakresu danych: {', '.join(exc.column_names)}.")
+            return
+        if result.rejected:
+            shown = result.rejected[:AED_FORM_MAX_SHOWN_ISSUES]
+            details = "".join(
+                f"<li>wiersz {issue.row_number} ({issue.device_id}): {'; '.join(issue.reasons)}</li>" for issue in shown
+            )
+            more = len(result.rejected) - len(shown)
+            suffix = f"<li>… oraz {more} kolejnych wierszy</li>" if more > 0 else ""
+            self.add_error(
+                "file",
+                mark_safe(
+                    f"Wykaz AED: {result.rejected_count} z {result.rejected_count + result.accepted_count} "
+                    f"wierszy nie przeszło walidacji. Popraw je i wgraj plik ponownie:<ul>{details}{suffix}</ul>"
+                ),
             )
 
     def _validate_dga_file(self, file: InMemoryUploadedFile, creating_resource: bool) -> None:

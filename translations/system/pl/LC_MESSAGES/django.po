@@ -3368,6 +3368,9 @@ msgstr "Bez daty zakończenia"
 msgid "Contains protected data list"
 msgstr "Zawiera wykaz chronionych danych"
 
+msgid "Contains AED list"
+msgstr "Zawiera wykaz defibrylatorów AED"
+
 msgid "The resource marked below as a list of protected data can be in xls, xlsx or csv format."
 msgstr "Zasób oznaczony poniżej jako wykaz chronionych danych może mieć format xls, xlsx lub csv."
 

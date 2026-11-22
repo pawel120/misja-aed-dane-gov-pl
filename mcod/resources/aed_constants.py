@@ -87,6 +87,8 @@ AED_POLAND_LONGITUDE: Tuple[float, float] = (14.0, 24.2)
 AED_DUPLICATE_DISTANCE_METERS: float = 15.0
 # Elektrody lub bateria, których termin mija w tym horyzoncie, trafiają do ostrzeżeń.
 AED_EXPIRY_WARNING_DAYS: int = 90
+# Ile odrzuconych wierszy pokazać dostawcy w formularzu zasobu.
+AED_FORM_MAX_SHOWN_ISSUES: int = 10
 
 # W przeciwieństwie do DGA wykaz AED może prowadzić każda instytucja, która
 # odpowiada za urządzenia: samorząd, administracja, firma, fundacja, OSP.

@@ -21,11 +21,13 @@ duplikat u innego dostawcy) nie blokują wiersza.
 Moduł nie zależy od Django: działa na samym pandas.
 """
 
+import csv
 import datetime
+import io
 import math
 import re
 from dataclasses import dataclass, field
-from typing import Iterable, List, Optional, Sequence, Tuple
+from typing import BinaryIO, Iterable, List, Optional, Sequence, Tuple
 
 import pandas as pd
 
@@ -125,6 +127,33 @@ def _valid_hours(value: str) -> bool:
         return True
     ranges = [part.strip() for part in value.split(",")]
     return all(HOURS_RANGE_RE.match(part) for part in ranges)
+
+
+def read_aed_file(file: BinaryIO, extension: str) -> pd.DataFrame:
+    """
+    Czyta wykaz AED jako tekst (bez zgadywania typów), żeby nie zgubić zer
+    wiodących w kodach TERYT i REGON ani nie zamienić „13” w „13.0”.
+    """
+    extension = extension.lower().lstrip(".")
+    if extension in ("xls", "xlsx"):
+        return pd.read_excel(file, dtype=str, keep_default_na=False)
+    if extension == "csv":
+        raw = file.read()
+        text = None
+        for encoding in ("utf-8-sig", "cp1250", "iso-8859-2"):
+            try:
+                text = raw.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+        if text is None:
+            raise ValueError("Nie rozpoznano kodowania pliku CSV")
+        try:
+            delimiter = csv.Sniffer().sniff(text[:4096], delimiters=",;	").delimiter
+        except csv.Error:
+            delimiter = ","
+        return pd.read_csv(io.StringIO(text), dtype=str, keep_default_na=False, sep=delimiter)
+    raise ValueError(f"Nieobsługiwany format pliku: {extension}")
 
 
 def normalize_aed_df(df: pd.DataFrame) -> pd.DataFrame:

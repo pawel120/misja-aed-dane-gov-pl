@@ -402,6 +402,7 @@ METADATA_MEDIA_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "datasets", "catalog"))
 DGA_RESOURCE_CREATION_STAGING_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "dga_temp"))
 BROKEN_LINKS_CREATION_STAGING_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "broken_links_temp"))
 MAIN_DGA_RESOURCE_XLSX_CREATION_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "main_dga"))
+MAIN_AED_RESOURCE_FILE_CREATION_ROOT = str(ROOT_DIR.path(MEDIA_ROOT, "main_aed"))
 
 MEDIA_URL = "/media/"
 ACADEMY_URL = "%s%s" % (MEDIA_URL, "academy")
@@ -1746,6 +1747,32 @@ MAIN_DGA_DATASET_TAGS_NAMES = [
     "akt o zarządzaniu danymi",
     "chronione dane",
 ]
+
+MAIN_AED_DATASET_OWNER_ORGANIZATION_PK = env(
+    "MAIN_AED_DATASET_OWNER_ORGANIZATION_PK", default=MAIN_DGA_DATASET_OWNER_ORGANIZATION_PK
+)
+MAIN_AED_DATASET_DEFAULT_TITLE = "Wykaz defibrylatorów AED – raport zbiorczy"
+MAIN_AED_DATASET_DEFAULT_DESC = (
+    "Zbiorczy wykaz automatycznych defibrylatorów zewnętrznych (AED) w Polsce. "
+    "Raport powstaje codziennie z wykazów AED, które publikują w portalu "
+    "instytucje odpowiedzialne za urządzenia (samorządy, urzędy, firmy, "
+    "fundacje, OSP). Za dane w każdym wierszu odpowiada dostawca wskazany w "
+    "kolumnie „Nazwa dostawcy”. Do raportu trafiają tylko wiersze, które "
+    "przeszły walidację wzorcowego zakresu danych o AED."
+)
+MAIN_AED_RESOURCE_DEFAULT_TITLE = "Wykaz defibrylatorów AED"
+MAIN_AED_RESOURCE_DEFAULT_DESC = (
+    "Raport zbiorczy wykazów AED opublikowanych przez dostawców danych. "
+    "Kolumna „Możliwy duplikat” wskazuje urządzenie innego dostawcy w odległości "
+    "do 15 m, a kolumna „Ostrzeżenia walidacji” m.in. elektrody lub baterię, "
+    "których termin ważności mija w ciągu 90 dni."
+)
+MAIN_AED_FILE_NAME_PREFIX = "Wykaz defibrylatorów AED – raport zbiorczy"
+MAIN_AED_DATASET_UPDATE_NOTIFICATION_EMAIL = env(
+    "MAIN_AED_DATASET_UPDATE_NOTIFICATION_EMAIL", default=MAIN_DGA_DATASET_UPDATE_NOTIFICATION_EMAIL
+)
+MAIN_AED_DATASET_CATEGORIES_TITLES = ["Zdrowie"]
+MAIN_AED_DATASET_TAGS_NAMES = ["AED", "defibrylatory", "ratownictwo"]
 
 PASSWORD_RESET_PATH = "/user/reset-password/%s/"
 EMAIL_VALIDATION_PATH = "/user/verify-email/%s/"

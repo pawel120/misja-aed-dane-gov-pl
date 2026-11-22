@@ -17,6 +17,7 @@ from mcod.resources.aed_validation import (
     MainAEDMissingRequiredColumnError,
     build_main_aed_df,
     distance_meters,
+    read_aed_file,
     validate_aed_df,
 )
 
@@ -191,3 +192,23 @@ class TestBuildMainAedDf:
 
 def test_distance_meters():
     assert distance_meters((52.317014, 21.104131), (52.317050, 21.104131)) == pytest.approx(4.0, abs=0.5)
+
+
+class TestReadAedFile:
+    def test_csv_with_semicolons_keeps_text_values(self):
+        import io
+
+        header = ";".join(AED_COLUMNS)
+        values = ";".join(aed_row(id_urzadzenia="013", kod_terc="0201011").get(column) for column in AED_COLUMNS)
+        content = f"{header}\n{values}\n".encode("cp1250")
+        df = read_aed_file(io.BytesIO(content), ".csv")
+        assert df.loc[0, "id_urzadzenia"] == "013"
+        assert df.loc[0, "kod_terc"] == "0201011"
+        assert validate_aed_df(df, today=TODAY).accepted_count == 1
+
+    def test_xlsx_round_trip(self, tmp_path):
+        path = tmp_path / "wykaz.xlsx"
+        aed_df(aed_row()).to_excel(path, index=False)
+        with open(path, "rb") as file:
+            df = read_aed_file(file, "xlsx")
+        assert validate_aed_df(df, today=TODAY).accepted_count == 1

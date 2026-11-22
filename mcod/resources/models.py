@@ -577,6 +577,7 @@ class Resource(ExtendedModel):
     automatic_data_date_end = models.DateField(verbose_name=_("Data date end date update"), blank=True, null=True)
     endless_data_date_update = models.BooleanField(verbose_name=_("Endless data date update"), default=False)
     contains_protected_data = models.BooleanField(verbose_name=_("Contains protected data list"), default=False)
+    contains_aed_list = models.BooleanField(verbose_name=_("Contains AED list"), default=False)
 
     def __str__(self):
         return self.title
@@ -1383,6 +1384,15 @@ class Resource(ExtendedModel):
         already published resources.
         """
         return self.contains_protected_data and self.is_published and not self.is_removed
+
+    @property
+    def is_aed_list(self) -> bool:
+        """
+        Zasób jest aktualnym wykazem defibrylatorów AED swojej instytucji.
+        Opublikowane wykazy AED są raz na dobę sklejane w raport zbiorczy
+        (zob. ``aed_utils.py``), na wzór wykazu chronionych danych DGA.
+        """
+        return self.contains_aed_list and self.is_published and not self.is_removed
 
     @property
     def needs_es_and_rdf_db_update(self):
