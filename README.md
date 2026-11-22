@@ -1,3 +1,8 @@
+> **HackNation 2026, Misja AED (Ministerstwo Cyfryzacji).** To repozytorium to backend dane.gov.pl 2.63.0
+> z dopisanym modułem „Wykaz AED”. Pierwszy commit (`f90a02f`) to kod portalu bez zmian, nasze zmiany są
+> w kolejnych commitach (`git diff f90a02f`). Opis rozwiązania, klikalny prototyp i kroki dla jury:
+> **[DLA_JURY.md](DLA_JURY.md)**. Wzorcowy zakres danych: [`wzorzec/`](wzorzec/). Dalej oryginalne README portalu.
+
 # KONFIGURACJA ŚRODOWISKA DEWELOPERSKIEGO
 
 ## Instalacja narzędzi docker oraz docker-compose
