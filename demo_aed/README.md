@@ -12,3 +12,12 @@ na wzorcowy zakres danych o AED, oraz wykaz testowy z celowymi błędami
 4. Dane demo: `docker exec -i mcod-admin python manage.py shell < demo_aed/setup_demo.py`
 5. Raport zbiorczy od razu: `docker exec mcod-admin python manage.py create_main_aed`
 6. Panel administracyjny: http://127.0.0.1:8001/
+
+## Serwer testowy dla jury (tylko wdrożenie, bez zmian w kodzie frontendu)
+
+- Frontend portalu jest zbudowany bez zmian i serwowany przez Caddy z `/srv/frontend` (`Caddyfile`).
+- Okno z informacją RODO, które portal pokazuje przy pierwszym wejściu, jest na serwerze testowym wyłączone,
+  żeby nie zasłaniało przeglądania: na początku `<head>` w `/srv/frontend/index.html` jest
+  `<script>try{localStorage.setItem("OD_isAcquintedWithRodo",JSON.stringify("true"))}catch(e){}</script>`
+  (ten sam klucz zapisuje portal po zamknięciu okna; oryginał: `/srv/frontend/index.html.oryginal`).
+- Logowanie jury jednym kliknięciem: kod w `data/aed/demo_login_token.txt` na serwerze (poza gitem), zob. `DLA_JURY.md`.
