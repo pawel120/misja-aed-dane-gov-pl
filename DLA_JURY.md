@@ -23,7 +23,8 @@ mechanizm „Wykaz AED”, wzorowany na istniejącym w portalu wykazie chroniony
 | API portalu: zbiór raportu zbiorczego (Ministerstwo Cyfryzacji) | https://api.145-239-30-81.sslip.io/1.4/datasets/6 |
 | API portalu: punkty mapy raportu zbiorczego | https://api.145-239-30-81.sslip.io/1.4/resources/8/geo (zasób raportu jest stały; codzienne przeliczenie podmienia tylko jego plik) |
 | API portalu: wiersze raportu z wyszukiwaniem | https://api.145-239-30-81.sslip.io/1.4/resources/8/data?q=Krosno |
-| Konto dla jury | e-mail i hasło podane w zgłoszeniu (HackTribe) |
+| **Wejście do panelu jednym kliknięciem** | link podany w zgłoszeniu (HackTribe), ważny do 22.11.2026, 23:59; loguje na konto jury bez wpisywania hasła |
+| Konto dla jury (zapasowo) | e-mail i hasło podane w zgłoszeniu (HackTribe) |
 
 To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
 
@@ -32,7 +33,8 @@ To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
 0. Bez logowania: wejdź na stronę publiczną, wpisz w wyszukiwarkę „defibrylator”, otwórz
    „Wykaz defibrylatorów AED” i zakładkę **Mapa** – 775 AED od 5 dostawców na mapie portalu.
    Strona działa także na telefonie (układ portalu jest responsywny).
-1. Zaloguj się do panelu. Wejdź w **Dane → Resources**.
+1. Otwórz link ze zgłoszenia – od razu jesteś w panelu, na liście zasobów (**Dane → Zasoby**).
+   Bez linku: zaloguj się e-mailem i hasłem ze zgłoszenia.
 2. Otwórz „Wykaz AED – Urząd Miasta Legionowo”. Pod polem wykazu chronionych danych (DGA)
    jest nasze pole **„Zawiera wykaz defibrylatorów AED: Tak”** z opisem mechanizmu.
    Kliknij **„Zapisz i kontynuuj edycję”**: panel podziękuje dostawcy
@@ -158,5 +160,9 @@ przepisane na wzorcowy zakres danych, oraz jeden wykaz testowy z celowymi błęd
   pola AED; następny krok to jedno pole, tak jak `containsProtectedData` dla DGA.
 
 ## Uruchomienie u siebie
+
+Logowanie jednym kliknięciem działa tylko w ustawieniach demo (`mcod/settings/aed_demo.py`,
+`mcod/resources/aed_demo_login.py`). Kodu linku nie ma w repozytorium: ustawia się go w zmiennej
+`AED_DEMO_LOGIN_TOKEN` albo w pliku `data/aed/demo_login_token.txt` (w `.gitignore`). Bez kodu adres nie działa.
 
 `demo_aed/README.md` (Docker Compose, porty tylko na 127.0.0.1).

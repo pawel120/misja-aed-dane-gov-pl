@@ -267,3 +267,6 @@ requeststest
 .ipynb_checkpoints/
 
 mcod/api_key.txt
+
+# Tajny kod logowania jury w demo AED (mcod/resources/aed_demo_login.py)
+data/aed/demo_login_token.txt

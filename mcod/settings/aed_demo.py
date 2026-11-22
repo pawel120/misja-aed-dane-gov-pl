@@ -114,4 +114,14 @@ class AEDDemoBannerMiddleware:
         return response
 
 
-MIDDLEWARE = list(MIDDLEWARE) + ["mcod.settings.aed_demo.AEDDemoBannerMiddleware"]  # noqa: F405
+MIDDLEWARE = list(MIDDLEWARE) + [  # noqa: F405
+    "mcod.settings.aed_demo.AEDDemoBannerMiddleware",
+    "mcod.resources.aed_demo_login.AEDDemoJuryLoginMiddleware",
+]
+
+# Logowanie jury jednym kliknięciem (mcod/resources/aed_demo_login.py). Kod tylko poza repozytorium.
+AED_DEMO_LOGIN_TOKEN = env("AED_DEMO_LOGIN_TOKEN", default="")  # noqa: F405
+AED_DEMO_LOGIN_TOKEN_FILE = str(DATA_DIR.path("aed", "demo_login_token.txt"))  # noqa: F405
+AED_DEMO_LOGIN_EMAIL = env("AED_DEMO_LOGIN_EMAIL", default="jury@aed.demo")  # noqa: F405
+AED_DEMO_LOGIN_UNTIL = env("AED_DEMO_LOGIN_UNTIL", default="2026-11-22T23:59:59+01:00")  # noqa: F405
+AED_DEMO_LOGIN_NEXT = env("AED_DEMO_LOGIN_NEXT", default="/resources/resource/")  # noqa: F405
