@@ -16,6 +16,8 @@ api.145-239-30-81.sslip.io {
 # Publiczna strona portalu (ich frontend Angular, bez zmian) + nasze API.
 portal.145-239-30-81.sslip.io {
 	encode gzip
+	redir /aed /pl/dataset/6/resource/8,wykaz-defibrylatorow-aed/map 302
+	redir /aed/ /pl/dataset/6/resource/8,wykaz-defibrylatorow-aed/map 302
 	handle_path /api/* {
 		rewrite * /1.4{uri}
 		reverse_proxy 127.0.0.1:8000
@@ -60,5 +62,14 @@ cms.portal.145-239-30-81.sslip.io {
 	}
 	@preflight method OPTIONS
 	respond @preflight 204
-	respond 404
+	@readonly method GET HEAD
+	handle @readonly {
+		reverse_proxy https://cms.dane.gov.pl {
+			header_up Host cms.dane.gov.pl
+			header_up -X-Forwarded-Host
+			header_down -Access-Control-Allow-Origin
+			header_down -Access-Control-Allow-Credentials
+		}
+	}
+	respond 405
 }

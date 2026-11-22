@@ -13,6 +13,8 @@ mechanizm „Wykaz AED”, wzorowany na istniejącym w portalu wykazie chroniony
 
 ## Klikalny prototyp
 
+**Jeden link: https://portal.145-239-30-81.sslip.io/aed** – raport zbiorczy AED na mapie portalu (przewiń w dół do zakładki „Mapa”).
+
 | Co | Adres |
 |---|---|
 | **Strona publiczna portalu** (frontend dane.gov.pl bez zmian): raport zbiorczy z mapą | https://portal.145-239-30-81.sslip.io/pl/dataset/6,wykaz-defibrylatorow-aed-raport-zbiorczy |
@@ -61,7 +63,7 @@ przepisane na wzorcowy zakres danych, oraz jeden wykaz testowy z celowymi błęd
 
 ## Ograniczenia
 
-- Bez CMS portalu (Wagtail): na stronie publicznej puste są aktualności, strony informacyjne i okno „Polityka prywatności i RODO”.
+- Nie stawialiśmy CMS portalu (Wagtail). Treści stron informacyjnych i aktualności strona testowa czyta tylko do odczytu z publicznego API CMS dane.gov.pl.
 - Frontend portalu jest zbudowany bez zmian; wyłączyliśmy tylko wysyłanie raportów błędów do Sentry ministerstwa.
 - Raport zbiorczy powstaje w zadaniu Celery o 05:00; w demo jury uruchamia go akcją w panelu.
 - Dane demo to 5 dostawców; w Polsce wykazy AED publikuje dziś kilkanaście miast, w różnych formatach.
