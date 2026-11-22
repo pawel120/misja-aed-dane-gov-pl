@@ -111,7 +111,7 @@ Wiersz z błędem nie trafia do raportu, a dostawca dostaje powód. Sprawdzamy:
 - identyfikator, nazwa miejsca, miejscowość i współrzędne są wypełnione; identyfikator nie powtarza się w wykazie;
 - współrzędne to liczby WGS84 z kropką i leżą w Polsce; zamienione szerokość i długość są wykrywane wprost;
 - TAK/NIE, daty rrrr-mm-dd, kod pocztowy 00-000, godziny w każdym dniu tygodnia (`08:00-16:00`, `24h`, `nieczynne`),
-  położenie (`wewnątrz`, `na zewnątrz`), spójność „dostęp 24h” z dniami „nieczynne”.
+  położenie (`wewnątrz`, `na zewnątrz`), spójność „dostęp 24h: TAK” z godzinami (żaden dzień „nieczynne” ani z godzinami innymi niż całodobowe).
 
 Ostrzeżenia nie blokują wiersza: elektrody lub bateria tracące ważność w ciągu 90 dni, możliwy duplikat
 (urządzenie innego dostawcy bliżej niż 15 m; dostawca to instytucja w portalu, nie sama nazwa, więc dwa
@@ -127,10 +127,10 @@ a komunikaty formularza idą przez tłumaczenia portalu, jak w wykazie DGA.
 
 ## Testy
 
-Testy modułu AED (163 przechodzi, bez bazy danych): `mcod/resources/tests/test_aed_validation.py`, `test_aed_files.py`, `test_aed_forms.py`, `test_aed_residents.py`, `test_aed_demo_login.py` i `mcod/harvester/tests/test_aed_harvester.py`.
+Testy modułu AED (171 przechodzi, bez bazy danych): `mcod/resources/tests/test_aed_validation.py`, `test_aed_files.py`, `test_aed_forms.py`, `test_aed_residents.py`, `test_aed_demo_login.py` i `mcod/harvester/tests/test_aed_harvester.py`.
 Obejmują pliki z repozytorium (wzorzec, dane demo), pliki zapisane przez Excel, CSV z różnych programów
 i kodowań, wartości skrajne, raport 20 000 AED oraz walidację danych samego portalu (goodtables), którą zasób
-musi przejść, żeby trafić do raportu. Jeden test oznaczony `xfail` opisuje znane ograniczenie (niżej).
+musi przejść, żeby trafić do raportu.
 
 ```
 python -m pytest mcod/resources/tests/test_aed_validation.py mcod/resources/tests/test_aed_files.py mcod/resources/tests/test_aed_forms.py mcod/resources/tests/test_aed_residents.py mcod/resources/tests/test_aed_demo_login.py mcod/harvester/tests/test_aed_harvester.py --noconftest -o addopts=""
@@ -167,7 +167,6 @@ przepisane na wzorcowy zakres danych, oraz jeden wykaz testowy z celowymi błęd
 - Dane demo to 5 dostawców; w Polsce wykazy AED publikuje dziś kilkanaście miast, w różnych formatach.
 - Godziny dostępności w danych miast są nieustrukturyzowane; w wykazach demo wpisaliśmy „24h” tylko tam,
   gdzie źródło podaje dostęp całodobowy, w pozostałych „X”.
-- „Dostęp 24h: TAK” przy ograniczonych godzinach w dniu tygodnia nie jest jeszcze zgłaszany.
 - Liczba mieszkańców to szacunek z siatki 1 km (ludność rozłożona równo w komórce); przy samej granicy
   prostokąt siatki obejmuje też komórki krajów sąsiednich.
 - Automatyczny import ustawia samą flagę „wykaz AED”; walidacje AED dostawca widzi przy imporcie dopiero

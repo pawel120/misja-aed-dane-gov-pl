@@ -365,10 +365,21 @@ class TestRowValues:
         result = check(io.BytesIO(csv_bytes(data)), "csv")
         assert any(reason.startswith("dostep_24h") for reason in result.rejected[0].reasons)
 
-    @pytest.mark.xfail(strict=True, reason="Znana luka: brak sprawdzenia dostep_24h = TAK przy ograniczonych godzinach.")
-    def test_24h_device_with_limited_hours(self):
-        data = [aed_row(dostep_24h="TAK", godziny_pn="08:00-16:00")]
-        assert check(io.BytesIO(csv_bytes(data)), "csv").accepted_count == 0
+    @pytest.mark.parametrize("hours", ["08:00-16:00", "00:00-12:00, 12:30-24:00", "8:00 - 16:00"])
+    def test_24h_device_with_limited_hours_is_rejected(self, hours):
+        data = [aed_row(dostep_24h="TAK", godziny_pn=hours)]
+        result = check(io.BytesIO(csv_bytes(data)), "csv")
+        assert result.accepted_count == 0
+        assert any("nie jest całodobowy" in reason and "godziny_pn" in reason for reason in result.rejected[0].reasons)
+
+    @pytest.mark.parametrize("hours", ["24h", "24H", "00:00-24:00", "X"])
+    def test_24h_device_with_full_day_or_unknown_hours_is_accepted(self, hours):
+        data = [aed_row(dostep_24h="TAK", **{column: hours for column in AED_COLUMNS if column.startswith("godziny_")})]
+        assert check(io.BytesIO(csv_bytes(data)), "csv").rejected == []
+
+    def test_device_without_24h_access_may_have_limited_hours(self):
+        data = [aed_row(dostep_24h="NIE", godziny_pn="08:00-16:00")]
+        assert check(io.BytesIO(csv_bytes(data)), "csv").accepted_count == 1
 
 
 class TestMainReport:

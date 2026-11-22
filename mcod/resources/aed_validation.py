@@ -56,6 +56,8 @@ from mcod.resources.aed_constants import (
 
 POSTAL_CODE_RE = re.compile(r"^\d{2}-\d{3}$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# Zapis godzin oznaczający dostęp przez całą dobę.
+AED_FULL_DAY_HOURS = ("24h", "00:00-24:00")
 HOURS_RANGE_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-4]):[0-5]\d$")
 
 
@@ -279,6 +281,7 @@ def _validate_row(row: pd.Series, today: datetime.date) -> Tuple[List[str], List
         errors.append(f"polozenie: dozwolone „wewnątrz”, „na zewnątrz” albo X, jest „{location}”")
 
     closed_days = []
+    limited_days = []
     for column in AED_WEEKDAY_COLUMNS:
         value = row[column]
         if _is_empty(value):
@@ -287,8 +290,12 @@ def _validate_row(row: pd.Series, today: datetime.date) -> Tuple[List[str], List
             errors.append(f"{column}: dozwolone HH:MM-HH:MM, 24h, nieczynne albo X, jest „{value}”")
         elif value == "nieczynne":
             closed_days.append(column)
+        elif value not in AED_FULL_DAY_HOURS:
+            limited_days.append(f"{column} = {value}")
     if row["dostep_24h"] == "TAK" and closed_days:
         errors.append(f"dostep_24h = TAK, ale {', '.join(closed_days)} = nieczynne")
+    if row["dostep_24h"] == "TAK" and limited_days:
+        errors.append(f"dostep_24h = TAK, ale dostęp nie jest całodobowy: {', '.join(limited_days)}")
 
     for column, label in (("data_waznosci_elektrod", "elektrody"), ("data_waznosci_baterii", "bateria")):
         expiry = _parse_date(row[column])
