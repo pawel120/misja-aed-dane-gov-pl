@@ -14,8 +14,9 @@ from mcod.resources.aed_constants import (
 )
 from mcod.resources.aed_validation import (
     AEDProviderList,
-    apply_aed_schema,
+    MainAEDDuplicatedColumnError,
     MainAEDMissingRequiredColumnError,
+    apply_aed_schema,
     build_main_aed_df,
     distance_meters,
     read_aed_file,
@@ -71,7 +72,7 @@ class TestValidateAedDf:
         assert exc.value.column_names == ["polozenie", "godziny_pn"]
 
     def test_headers_and_empty_cells_are_normalized(self):
-        df = aed_df(aed_row(dostep_publiczny="tak", nr_lokalu=None, szerokosc_geograficzna="52,317014"))
+        df = aed_df(aed_row(dostep_publiczny="tak", nr_lokalu=None, szerokosc_geograficzna=" 52.317014 "))
         df.columns = [f" {column.upper()} " for column in df.columns]
         result = validate_aed_df(df, today=TODAY)
         assert result.accepted_count == 1
@@ -97,6 +98,20 @@ class TestValidateAedDf:
     def test_non_numeric_coordinates_are_rejected(self):
         result = validate_aed_df(aed_df(aed_row(szerokosc_geograficzna="52°19'N")), today=TODAY)
         assert "liczbami" in result.rejected[0].reasons[0]
+
+    def test_decimal_comma_in_coordinates_is_rejected(self):
+        # Mapa portalu czyta współrzędne przez float(): „52,317014” nie dałby punktu.
+        row = aed_row(szerokosc_geograficzna="52,317014", dlugosc_geograficzna="21,104131")
+        result = validate_aed_df(aed_df(row), today=TODAY)
+        assert result.accepted_count == 0
+        assert "kropką" in result.rejected[0].reasons[0]
+
+    def test_duplicated_column_rejects_whole_list(self):
+        df = aed_df(aed_row())
+        df["ID_URZADZENIA"] = "AED-9"
+        with pytest.raises(MainAEDDuplicatedColumnError) as exc_info:
+            validate_aed_df(df, today=TODAY)
+        assert exc_info.value.column_names == ["id_urzadzenia"]
 
     @pytest.mark.parametrize(
         "overrides, fragment",
@@ -145,8 +160,12 @@ class TestValidateAedDf:
 class TestBuildMainAedDf:
     def test_lists_from_three_providers_are_merged(self):
         lists = [
-            AEDProviderList("Urząd Miasta A", "000000001", aed_df(aed_row(), aed_row(id_urzadzenia="AED-2", szerokosc_geograficzna="52.3"))),
-            AEDProviderList("Fundacja B", "000000002", aed_df(aed_row(szerokosc_geograficzna="50.06", dlugosc_geograficzna="19.94"))),
+            AEDProviderList(
+                "Urząd Miasta A", "000000001", aed_df(aed_row(), aed_row(id_urzadzenia="AED-2", szerokosc_geograficzna="52.3"))
+            ),
+            AEDProviderList(
+                "Fundacja B", "000000002", aed_df(aed_row(szerokosc_geograficzna="50.06", dlugosc_geograficzna="19.94"))
+            ),
             AEDProviderList("OSP C", "", aed_df(aed_row(szerokosc_geograficzna="54.35", dlugosc_geograficzna="18.65"))),
         ]
         result = build_main_aed_df(lists, today=TODAY)
@@ -214,9 +233,30 @@ class TestReadAedFile:
             df = read_aed_file(file, "xlsx")
         assert validate_aed_df(df, today=TODAY).accepted_count == 1
 
+    def test_xlsx_typed_cells_are_read_as_template_text(self, tmp_path):
+        # Excel zamienia wpisane daty na daty, a liczby na liczby.
+        row = aed_row(
+            szerokosc_geograficzna=52.317014,
+            dlugosc_geograficzna=21.104131,
+            nr_budynku=9,
+            data_waznosci_elektrod=datetime.datetime(2027, 6, 30),
+            data_aktualizacji=datetime.date(2026, 11, 21),
+        )
+        path = tmp_path / "wykaz.xlsx"
+        aed_df(row).to_excel(path, index=False)
+        with open(path, "rb") as file:
+            df = read_aed_file(file, "xlsx")
+        assert df.loc[0, "data_waznosci_elektrod"] == "2027-06-30"
+        assert df.loc[0, "data_aktualizacji"] == "2026-11-21"
+        assert df.loc[0, "nr_budynku"] == "9"
+        assert df.loc[0, "szerokosc_geograficzna"] == "52.317014"
+        result = validate_aed_df(df, today=TODAY)
+        assert result.rejected == []
+        assert result.accepted.loc[0, "data_waznosci_elektrod"] == "2027-06-30"
 
-def test_apply_aed_schema_sets_template_types_and_map_columns():
-    tds = {
+
+def _schema_with_aed_and_other_columns():
+    return {
         "fields": [
             {"name": "id_urzadzenia", "type": "integer", "format": "default"},
             {"name": "nr_budynku", "type": "integer", "format": "default"},
@@ -226,7 +266,17 @@ def test_apply_aed_schema_sets_template_types_and_map_columns():
             {"name": "inna_kolumna", "type": "integer", "format": "default"},
         ]
     }
-    result = apply_aed_schema(tds)
+
+
+AED_SCHEMA_GEO_EXPECTED = {
+    "b": {"col_name": "szerokosc_geograficzna", "col_index": 2},
+    "l": {"col_name": "dlugosc_geograficzna", "col_index": 3},
+    "label": {"col_name": "nazwa_miejsca", "col_index": 4},
+}
+
+
+def test_apply_aed_schema_sets_template_types_and_map_columns_for_main_report():
+    result = apply_aed_schema(_schema_with_aed_and_other_columns(), set_template_types=True)
     types = {f["name"]: f["type"] for f in result["fields"]}
     assert types == {
         "id_urzadzenia": "string",
@@ -236,8 +286,43 @@ def test_apply_aed_schema_sets_template_types_and_map_columns():
         "nazwa_miejsca": "string",
         "inna_kolumna": "integer",
     }
-    assert result["geo"] == {
-        "b": {"col_name": "szerokosc_geograficzna", "col_index": 2},
-        "l": {"col_name": "dlugosc_geograficzna", "col_index": 3},
-        "label": {"col_name": "nazwa_miejsca", "col_index": 4},
-    }
+    assert result["geo"] == AED_SCHEMA_GEO_EXPECTED
+
+
+def test_apply_aed_schema_keeps_inferred_types_of_provider_list():
+    # Typ „string” dla komórki Excela z datą albo liczbą kończy się błędem walidacji danych portalu.
+    tds = _schema_with_aed_and_other_columns()
+    inferred = {f["name"]: f["type"] for f in tds["fields"]}
+    result = apply_aed_schema(tds)
+    assert {f["name"]: f["type"] for f in result["fields"]} == inferred
+    assert result["geo"] == AED_SCHEMA_GEO_EXPECTED
+
+
+class TestProviderListPassesPortalDataValidation:
+    """Plik dostawcy przyjęty przez walidacje AED musi przejść też walidację danych portalu."""
+
+    def _validate_with_portal(self, path, file_format):
+        from goodtables import validate as validate_table
+        from tableschema import Table
+
+        schema = Table(str(path), format=file_format, ignore_blank_headers=True).infer(limit=5000, missing_values=["X"])
+        schema = apply_aed_schema(schema)
+        return validate_table(str(path), schema=schema, checks=["structure", "schema"], format=file_format, preset="table")
+
+    def test_xlsx_with_date_and_number_cells(self, tmp_path):
+        row = aed_row(
+            szerokosc_geograficzna=52.317014,
+            dlugosc_geograficzna=21.104131,
+            nr_budynku=9,
+            data_waznosci_elektrod=datetime.datetime(2027, 6, 30),
+        )
+        path = tmp_path / "wykaz.xlsx"
+        aed_df(row, aed_row(id_urzadzenia="AED-2")).to_excel(path, index=False)
+        report = self._validate_with_portal(path, "xlsx")
+        assert report["valid"], report["tables"][0]["errors"]
+
+    def test_csv_from_template(self, tmp_path):
+        path = tmp_path / "wykaz.csv"
+        aed_df(aed_row(), aed_row(id_urzadzenia="AED-2", nr_budynku="25/27")).to_csv(path, index=False)
+        report = self._validate_with_portal(path, "csv")
+        assert report["valid"], report["tables"][0]["errors"]

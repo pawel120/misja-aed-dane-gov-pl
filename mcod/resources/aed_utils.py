@@ -25,7 +25,12 @@ from django.db import transaction
 from django.db.models import QuerySet
 
 from mcod.resources.aed_constants import ALLOWED_AED_INSTITUTIONS
-from mcod.resources.aed_validation import AEDProviderList, MainAEDResult, build_main_aed_df, read_aed_file
+from mcod.resources.aed_validation import (
+    AEDProviderList,
+    MainAEDResult,
+    build_main_aed_df,
+    read_aed_file,
+)
 
 logger = logging.getLogger("mcod")
 
@@ -44,8 +49,11 @@ def get_main_aed_dataset() -> Optional["Dataset"]:  # noqa: F821
 
 def is_aed_resource(resource: "Resource") -> bool:  # noqa: F821
     """Wykaz AED dostawcy albo raport zbiorczy: oba mają kolumny wzorca AED."""
-    if resource.contains_aed_list:
-        return True
+    return resource.contains_aed_list or is_main_aed_resource(resource)
+
+
+def is_main_aed_resource(resource: "Resource") -> bool:  # noqa: F821
+    """Zasób raportu zbiorczego AED (plik CSV tworzony przez portal)."""
     dataset = resource.dataset
     return bool(
         dataset

@@ -3371,6 +3371,26 @@ msgstr "Zawiera wykaz chronionych danych"
 msgid "Contains AED list"
 msgstr "Zawiera wykaz defibrylatorów AED"
 
+msgid "The AED list can be kept by a local government, a government institution, a private entity or another institution."
+msgstr "Wykaz AED może prowadzić samorząd, administracja rządowa, podmiot prywatny albo inna instytucja."
+
+msgid "The resource marked as an AED list must be a csv, xls or xlsx file."
+msgstr "Zasób oznaczony jako wykaz AED musi być plikiem csv, xls albo xlsx."
+
+msgid "Cannot read the table from the AED list file."
+msgstr "Nie udało się odczytać tabeli z pliku wykazu AED."
+
+msgid "row"
+msgstr "wiersz"
+
+#, python-format
+msgid "… and %(count)s more rows"
+msgstr "… oraz %(count)s kolejnych wierszy"
+
+#, python-format
+msgid "AED list: %(rejected)s of %(total)s rows did not pass validation. Fix them and upload the file again:"
+msgstr "Wykaz AED: %(rejected)s z %(total)s wierszy nie przeszło walidacji. Popraw je i wgraj plik ponownie:"
+
 msgid "The resource marked below as a list of protected data can be in xls, xlsx or csv format."
 msgstr "Zasób oznaczony poniżej jako wykaz chronionych danych może mieć format xls, xlsx lub csv."
 

@@ -57,12 +57,24 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 HOURS_RANGE_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-4]):[0-5]\d$")
 
 
-class MainAEDMissingRequiredColumnError(Exception):
+class MainAEDColumnsError(Exception):
+    """Nagłówki zasobu nie pozwalają sprawdzić wykazu AED (cały wykaz jest pomijany)."""
+
+
+class MainAEDMissingRequiredColumnError(MainAEDColumnsError):
     """Zasób nie ma kolumn wzorcowego zakresu danych AED."""
 
     def __init__(self, column_names: Sequence[str]):
         self.column_names = list(column_names)
         super().__init__(f"Brak wymaganych kolumn: {', '.join(self.column_names)}")
+
+
+class MainAEDDuplicatedColumnError(MainAEDColumnsError):
+    """Ta sama kolumna występuje w nagłówku więcej niż raz (np. „ID_URZADZENIA” i „id_urzadzenia”)."""
+
+    def __init__(self, column_names: Sequence[str]):
+        self.column_names = list(column_names)
+        super().__init__(f"Powtórzone kolumny: {', '.join(self.column_names)}")
 
 
 @dataclass
@@ -100,8 +112,10 @@ def _is_empty(value: str) -> bool:
 
 
 def _parse_coordinate(value: str) -> Optional[float]:
+    # Mapa portalu czyta współrzędne przez float() (IndexedData._get_point),
+    # więc przecinek dziesiętny dałby wiersz bez punktu na mapie.
     try:
-        number = float(value.replace(",", "."))
+        number = float(value)
     except ValueError:
         return None
     if math.isnan(number):
@@ -129,6 +143,44 @@ def _valid_hours(value: str) -> bool:
     return all(HOURS_RANGE_RE.match(part) for part in ranges)
 
 
+def _excel_value_to_text(value: Any) -> str:
+    """
+    Komórka Excela jako tekst wzorca. Excel sam zamienia wpisane „2027-06-30”
+    na datę; bez tej zamiany wiersz miałby „2027-06-30 00:00:00”.
+    """
+    if isinstance(value, (datetime.datetime, pd.Timestamp)):
+        if value.time() == datetime.time(0, 0):
+            return value.date().isoformat()
+        return value.isoformat(sep=" ")
+    if isinstance(value, datetime.date):
+        return value.isoformat()
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value)
+
+
+# Te same bajty co w ``mcod.resources.guess.file_encoding``: polskie litery,
+# które w ISO-8859-2 i Windows-1250 mają różne kody (np. „ą”: 0xB1 i 0xB9).
+ISO_8859_2_ONLY_BYTES = (b"\xb1", b"\xac", b"\xbc", b"\xa1", b"\xb6", b"\xa6")
+CP1250_ONLY_BYTES = (b"\xb9", b"\xa5", b"\x9f", b"\x8f", b"\x8c", b"\x9c")
+
+
+def _decode_csv(raw: bytes) -> str:
+    try:
+        return raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        pass
+    iso_count = sum(raw.count(byte) for byte in ISO_8859_2_ONLY_BYTES)
+    cp_count = sum(raw.count(byte) for byte in CP1250_ONLY_BYTES)
+    encodings = ("iso-8859-2", "cp1250") if iso_count > cp_count else ("cp1250", "iso-8859-2")
+    for encoding in encodings:
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    raise ValueError("Nie rozpoznano kodowania pliku CSV")
+
+
 def read_aed_file(file: BinaryIO, extension: str) -> pd.DataFrame:
     """
     Czyta wykaz AED jako tekst (bez zgadywania typów), żeby nie zgubić zer
@@ -136,18 +188,10 @@ def read_aed_file(file: BinaryIO, extension: str) -> pd.DataFrame:
     """
     extension = extension.lower().lstrip(".")
     if extension in ("xls", "xlsx"):
-        return pd.read_excel(file, dtype=str, keep_default_na=False)
+        df = pd.read_excel(file, dtype=object, keep_default_na=False)
+        return df.applymap(_excel_value_to_text)
     if extension == "csv":
-        raw = file.read()
-        text = None
-        for encoding in ("utf-8-sig", "cp1250", "iso-8859-2"):
-            try:
-                text = raw.decode(encoding)
-                break
-            except UnicodeDecodeError:
-                continue
-        if text is None:
-            raise ValueError("Nie rozpoznano kodowania pliku CSV")
+        text = _decode_csv(file.read())
         try:
             delimiter = csv.Sniffer().sniff(text[:4096], delimiters=",;	").delimiter
         except csv.Error:
@@ -171,6 +215,9 @@ def normalize_aed_df(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def check_aed_columns(df: pd.DataFrame) -> None:
+    duplicated = sorted(set(df.columns[df.columns.duplicated()]))
+    if duplicated:
+        raise MainAEDDuplicatedColumnError(duplicated)
     missing = [column for column in AED_COLUMNS if column not in df.columns]
     if missing:
         raise MainAEDMissingRequiredColumnError(missing)
@@ -189,7 +236,7 @@ def _validate_row(row: pd.Series, today: datetime.date) -> Tuple[List[str], List
     if not _is_empty(lat_raw) and not _is_empty(lon_raw):
         lat, lon = _parse_coordinate(lat_raw), _parse_coordinate(lon_raw)
         if lat is None or lon is None:
-            errors.append("współrzędne muszą być liczbami (stopnie dziesiętne WGS84, np. 52.2297)")
+            errors.append("współrzędne muszą być liczbami z kropką dziesiętną (stopnie WGS84, np. 52.2297)")
         elif _in_range(lat, AED_POLAND_LATITUDE) and _in_range(lon, AED_POLAND_LONGITUDE):
             point = (lat, lon)
         elif _in_range(lon, AED_POLAND_LATITUDE) and _in_range(lat, AED_POLAND_LONGITUDE):
@@ -247,9 +294,10 @@ def validate_aed_df(df: pd.DataFrame, today: Optional[datetime.date] = None) -> 
         MainAEDMissingRequiredColumnError: gdy brakuje kolumn wzorca.
     """
     today = today or datetime.date.today()
-    df = normalize_aed_df(df)
+    df = df.copy()
+    df.columns = [str(column).strip().lower() for column in df.columns]
     check_aed_columns(df)
-    df = df[AED_COLUMNS]
+    df = normalize_aed_df(df[AED_COLUMNS])
 
     accepted_indexes: List[int] = []
     warnings_per_row: List[str] = []
@@ -276,7 +324,7 @@ def validate_aed_df(df: pd.DataFrame, today: Optional[datetime.date] = None) -> 
 
     accepted = df.loc[accepted_indexes].copy()
     for column in ("szerokosc_geograficzna", "dlugosc_geograficzna"):
-        accepted[column] = accepted[column].map(lambda value: float(value.replace(",", ".")))
+        accepted[column] = accepted[column].map(float)
     accepted[MAIN_AED_WARNINGS_COLUMN] = warnings_per_row
     accepted = accepted.reset_index(drop=True)
     return AEDValidationResult(accepted=accepted, rejected=rejected, warnings=warnings)
@@ -360,7 +408,7 @@ def build_main_aed_df(lists: Iterable[AEDProviderList], today: Optional[datetime
     for provider_list in lists:
         try:
             result = validate_aed_df(provider_list.df, today=today)
-        except MainAEDMissingRequiredColumnError as exc:
+        except MainAEDColumnsError as exc:
             results.append((provider_list.provider_name, None, str(exc)))
             continue
         results.append((provider_list.provider_name, result, None))
@@ -390,11 +438,16 @@ AED_SCHEMA_GEO: Dict[str, str] = {
 AED_SCHEMA_NUMBER_COLUMNS = ("szerokosc_geograficzna", "dlugosc_geograficzna", "Lp.")
 
 
-def apply_aed_schema(tds: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+def apply_aed_schema(tds: Optional[Dict[str, Any]], set_template_types: bool = False) -> Optional[Dict[str, Any]]:
     """
-    Ustawia w schemacie tabeli typy kolumn ze wzorca AED zamiast zgadywanych
-    z pierwszych wierszy (np. „nr_budynku” to tekst: „25/27”, „2A”) i oznacza
-    kolumny mapy, żeby portal od razu rysował punkty AED.
+    Oznacza kolumny mapy, żeby portal od razu rysował punkty AED.
+
+    Typy kolumn ze wzorca (``set_template_types``) ustawiamy tylko dla raportu
+    zbiorczego: to CSV, który portal pisze sam, same teksty, a przy ponad
+    5000 wierszy ``infer_schema`` mógłby zgadnąć np. „nr_budynku” jako liczbę
+    i odrzucić „25/27”. W pliku dostawcy zostają typy zgadnięte przez portal:
+    tabulator czyta komórki Excela jako daty i liczby, a typ „string” dla
+    takiej komórki kończy się błędem walidacji danych zasobu.
     """
     if not tds or not tds.get("fields"):
         return tds
@@ -404,8 +457,9 @@ def apply_aed_schema(tds: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         name = str(schema_field.get("name", "")).strip()
         if name not in known:
             continue
-        schema_field["type"] = "number" if name in AED_SCHEMA_NUMBER_COLUMNS else "string"
-        schema_field["format"] = "default"
+        if set_template_types:
+            schema_field["type"] = "number" if name in AED_SCHEMA_NUMBER_COLUMNS else "string"
+            schema_field["format"] = "default"
         if name in AED_SCHEMA_GEO:
             schema_field["geo"] = AED_SCHEMA_GEO[name]
             geo[AED_SCHEMA_GEO[name]] = {"col_name": schema_field["name"], "col_index": index}

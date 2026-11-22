@@ -12,6 +12,7 @@ from django.contrib.admin.widgets import AdminDateWidget, FilteredSelectMultiple
 from django.contrib.postgres.forms.jsonb import JSONField
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile, UploadedFile
+from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -30,9 +31,9 @@ from mcod.lib.widgets import (
 )
 from mcod.organizations.models import Organization
 from mcod.regions.fields import RegionsMultipleChoiceField
-from mcod.resources.archives import is_password_protected_archive_file
 from mcod.resources.aed_constants import AED_FORM_MAX_SHOWN_ISSUES, ALLOWED_AED_INSTITUTIONS
-from mcod.resources.aed_validation import MainAEDMissingRequiredColumnError, read_aed_file, validate_aed_df
+from mcod.resources.aed_validation import MainAEDColumnsError, read_aed_file, validate_aed_df
+from mcod.resources.archives import is_password_protected_archive_file
 from mcod.resources.dga_constants import (
     ALLOWED_DGA_INSTITUTIONS,
     DGA_COLUMNS,
@@ -353,9 +354,22 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
         if data.get("contains_aed_list") == "True":
             if organization:
                 self._validate_institution_when_contains_aed_list(organization)
-            aed_file = data.get("file")
-            if isinstance(aed_file, UploadedFile):
-                self._validate_aed_file(aed_file)
+            # As for DGA: validate the uploaded file on creation and the saved
+            # file on update. The update form has no "file" field, so errors
+            # go to the flag field then.
+            if creating_resource:
+                aed_file = data.get("file")
+                if isinstance(aed_file, UploadedFile):
+                    self._validate_aed_file(aed_file, error_field="file")
+            elif self.instance.main_file:
+                aed_file = create_uploaded_file_from_path(self.instance.main_file.path)
+                if aed_file:
+                    self._validate_aed_file(aed_file, error_field="contains_aed_list")
+                else:
+                    self.add_error(
+                        "contains_aed_list",
+                        _("Cannot read existing file") + f": {self.instance.main_file.name}.",
+                    )
 
         self.validate_high_value_data_flags_conflict(data)
         if organization:
@@ -427,15 +441,18 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
         if organization.institution_type not in ALLOWED_AED_INSTITUTIONS:
             self.add_error(
                 "contains_aed_list",
-                "Wykaz AED może prowadzić samorząd, administracja rządowa, podmiot prywatny albo inna instytucja.",
+                _(
+                    "The AED list can be kept by a local government, a government "
+                    "institution, a private entity or another institution."
+                ),
             )
 
-    def _validate_aed_file(self, file: UploadedFile) -> None:
-        """Własne walidacje AED: dostawca od razu widzi, które wiersze trzeba poprawić."""
+    def _validate_aed_file(self, file: UploadedFile, error_field: str) -> None:
+        """AED validations on upload: the provider sees at once which rows to fix."""
         extension: Optional[str] = guess_extension(file.content_type or "")
         extension = extension[1:] if extension else os.path.splitext(file.name)[1][1:].lower()
         if extension not in DGA_RESOURCE_EXTENSIONS:
-            self.add_error("file", "Wykaz AED musi być plikiem csv, xls albo xlsx.")
+            self.add_error(error_field, _("The resource marked as an AED list must be a csv, xls or xlsx file."))
             return
         try:
             df = read_aed_file(file, extension)
@@ -445,27 +462,28 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
         finally:
             file.seek(0)
         if df is None:
-            self.add_error("file", "Nie udało się odczytać tabeli z pliku wykazu AED.")
+            self.add_error(error_field, _("Cannot read the table from the AED list file."))
             return
         try:
             result = validate_aed_df(df)
-        except MainAEDMissingRequiredColumnError as exc:
-            self.add_error("file", f"Wykaz AED nie ma kolumn wzorcowego zakresu danych: {', '.join(exc.column_names)}.")
+        except MainAEDColumnsError as exc:
+            self.add_error(error_field, str(exc))
             return
         if result.rejected:
             shown = result.rejected[:AED_FORM_MAX_SHOWN_ISSUES]
-            details = "".join(
-                f"<li>wiersz {issue.row_number} ({issue.device_id}): {'; '.join(issue.reasons)}</li>" for issue in shown
+            # Cell values come from the uploaded file, so they are always escaped.
+            rows = format_html_join(
+                "",
+                "<li>{} {} ({}): {}</li>",
+                ((_("row"), issue.row_number, issue.device_id, "; ".join(issue.reasons)) for issue in shown),
             )
-            more = len(result.rejected) - len(shown)
-            suffix = f"<li>… oraz {more} kolejnych wierszy</li>" if more > 0 else ""
-            self.add_error(
-                "file",
-                mark_safe(
-                    f"Wykaz AED: {result.rejected_count} z {result.rejected_count + result.accepted_count} "
-                    f"wierszy nie przeszło walidacji. Popraw je i wgraj plik ponownie:<ul>{details}{suffix}</ul>"
-                ),
-            )
+            more = result.rejected_count - len(shown)
+            if more > 0:
+                rows = format_html("{}<li>{}</li>", rows, _("… and %(count)s more rows") % {"count": more})
+            message = _(
+                "AED list: %(rejected)s of %(total)s rows did not pass validation. Fix them and upload the file again:"
+            ) % {"rejected": result.rejected_count, "total": result.rejected_count + result.accepted_count}
+            self.add_error(error_field, format_html("{}<ul>{}</ul>", message, rows))
 
     def _validate_dga_file(self, file: InMemoryUploadedFile, creating_resource: bool) -> None:
         extension: Optional[str] = guess_extension(file.content_type)
