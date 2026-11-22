@@ -1,0 +1,33 @@
+kolumna,typ_i_format,wymagana_wartosc,opis,przyklad
+id_urzadzenia,tekst,TAK,"Identyfikator urządzenia nadany przez dysponenta, unikalny w jego wykazie",AED-001
+regon_dysponenta,tekst (9 lub 14 cyfr),"NIE (X, gdy brak)","REGON podmiotu, u którego wisi urządzenie, jeśli inny niż dostawca danych; inaczej X",X
+nazwa_dysponenta,tekst,"NIE (X, gdy brak)","Nazwa podmiotu, który odpowiada za urządzenie",Dostawca XYZ (przykład)
+nazwa_miejsca,tekst,TAK,"Nazwa obiektu, w którym jest AED; etykieta punktu na mapie portalu",Szkoła Podstawowa nr 2
+cecha_ulicy,tekst,"NIE (X, gdy brak)","ulica, aleja, plac, osiedle albo X",ulica
+nazwa_ulicy,tekst,"NIE (X, gdy brak)",Nazwa ulicy bez cechy,Szkolna
+nr_budynku,tekst,"NIE (X, gdy brak)","Numer budynku (także z literą lub ułamkiem, np. 2A, 25/27)",9
+nr_lokalu,tekst,"NIE (X, gdy brak)",Numer lokalu albo X,X
+kod_pocztowy,tekst 00-000,"NIE (X, gdy brak)",Kod pocztowy,00-001
+miejscowosc,tekst,TAK,Miejscowość,Przykładowo
+kod_terc,tekst (7 cyfr),"NIE (X, gdy brak)",Kod gminy z rejestru TERYT (TERC) albo X,X
+kod_simc,tekst (7 cyfr),"NIE (X, gdy brak)",Identyfikator miejscowości z rejestru TERYT (SIMC) albo X,X
+szerokosc_geograficzna,liczba,TAK,"WGS84, stopnie dziesiętne z kropką, np. 52.3170; kolumna mapy portalu",52.2297
+dlugosc_geograficzna,liczba,TAK,"WGS84, stopnie dziesiętne z kropką, np. 21.1041; kolumna mapy portalu",21.0122
+polozenie,wewnątrz / na zewnątrz / X,"NIE (X, gdy brak)","Czy AED jest w budynku, czy na zewnątrz (np. w szafce na elewacji)",wewnątrz
+opis_lokalizacji,tekst,"NIE (X, gdy brak)","Jak dojść: piętro, wejście, gablota","Parter, przy portierni"
+dostep_24h,TAK / NIE / X,"NIE (X, gdy brak)",Czy urządzenie jest dostępne całą dobę,NIE
+godziny_pn,HH:MM-HH:MM / 24h / nieczynne / X,"NIE (X, gdy brak)","Godziny dostępu – poniedziałek; kilka przedziałów po przecinku, np. 08:00-12:00, 13:00-16:00",07:00-17:00
+godziny_wt,HH:MM-HH:MM / 24h / nieczynne / X,"NIE (X, gdy brak)","Godziny dostępu – wtorek; kilka przedziałów po przecinku, np. 08:00-12:00, 13:00-16:00",07:00-17:00
+godziny_sr,HH:MM-HH:MM / 24h / nieczynne / X,"NIE (X, gdy brak)","Godziny dostępu – środa; kilka przedziałów po przecinku, np. 08:00-12:00, 13:00-16:00",07:00-17:00
+godziny_cz,HH:MM-HH:MM / 24h / nieczynne / X,"NIE (X, gdy brak)","Godziny dostępu – czwartek; kilka przedziałów po przecinku, np. 08:00-12:00, 13:00-16:00",07:00-17:00
+godziny_pt,HH:MM-HH:MM / 24h / nieczynne / X,"NIE (X, gdy brak)","Godziny dostępu – piątek; kilka przedziałów po przecinku, np. 08:00-12:00, 13:00-16:00",07:00-15:00
+godziny_so,HH:MM-HH:MM / 24h / nieczynne / X,"NIE (X, gdy brak)","Godziny dostępu – sobota; kilka przedziałów po przecinku, np. 08:00-12:00, 13:00-16:00",nieczynne
+godziny_nd,HH:MM-HH:MM / 24h / nieczynne / X,"NIE (X, gdy brak)","Godziny dostępu – niedziela; kilka przedziałów po przecinku, np. 08:00-12:00, 13:00-16:00",nieczynne
+dostep_publiczny,TAK / NIE / X,"NIE (X, gdy brak)",Czy może z niego skorzystać osoba z zewnątrz,TAK
+urzadzenie_zamkniete,TAK / NIE / X,"NIE (X, gdy brak)",Czy AED jest zamknięty na klucz lub w zamykanym pomieszczeniu,NIE
+model_urzadzenia,tekst,"NIE (X, gdy brak)",Producent i model albo X,X
+data_ostatniego_przegladu,data rrrr-mm-dd,"NIE (X, gdy brak)",Data ostatniego przeglądu albo X,2026-05-10
+data_waznosci_elektrod,data rrrr-mm-dd,"NIE (X, gdy brak)",Termin ważności elektrod albo X; portal ostrzega 90 dni wcześniej,2027-03-31
+data_waznosci_baterii,data rrrr-mm-dd,"NIE (X, gdy brak)",Termin ważności baterii albo X; portal ostrzega 90 dni wcześniej,2029-01-31
+telefon_kontaktowy,tekst,"NIE (X, gdy brak)",Telefon do opiekuna urządzenia (służbowy) albo X,X
+data_aktualizacji,data rrrr-mm-dd,"NIE (X, gdy brak)",Data ostatniej aktualizacji rekordu,2026-11-22
