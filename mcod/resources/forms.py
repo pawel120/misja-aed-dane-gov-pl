@@ -269,7 +269,7 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
     contains_aed_list = forms.ChoiceField(
         required=True,
         initial=False,
-        label=_("Contains AED list").capitalize(),
+        label=_("Contains AED list"),
         choices=[(True, _("Yes")), (False, _("No"))],
         help_text=(
             "Wskazanie TAK dla opublikowanego zasobu oznacza, że zasób jest "
