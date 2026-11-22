@@ -23,7 +23,7 @@ mechanizm „Wykaz AED”, wzorowany na istniejącym w portalu wykazie chroniony
 | API portalu: zbiór raportu zbiorczego (Ministerstwo Cyfryzacji) | https://api.145-239-30-81.sslip.io/1.4/datasets/6 |
 | API portalu: punkty mapy raportu zbiorczego | https://api.145-239-30-81.sslip.io/1.4/resources/8/geo (zasób raportu jest stały; codzienne przeliczenie podmienia tylko jego plik) |
 | API portalu: wiersze raportu z wyszukiwaniem | https://api.145-239-30-81.sslip.io/1.4/resources/8/data?q=Krosno |
-| **Konto dla jury** | e-mail `jury@aed.demo`, hasło podane w zgłoszeniu (HackTribe); logowanie w panelu administracyjnym |
+| **Wejście do panelu jednym kliknięciem** | link podany w zgłoszeniu (HackTribe); działa wielokrotnie, do 22.11.2026, 23:59; loguje na konto jury bez wpisywania hasła |
 
 To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
 
@@ -32,8 +32,8 @@ To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
 0. Bez logowania: wejdź na stronę publiczną, wpisz w wyszukiwarkę „defibrylator”, otwórz
    „Wykaz defibrylatorów AED” i zakładkę **Mapa** – 775 AED od 5 dostawców na mapie portalu.
    Strona działa także na telefonie (układ portalu jest responsywny).
-1. Wejdź na https://admin.145-239-30-81.sslip.io i zaloguj się kontem jury (e-mail `jury@aed.demo`,
-   hasło ze zgłoszenia). Otwórz listę zasobów: **Dane → Zasoby**.
+1. Otwórz link ze zgłoszenia – od razu jesteś w panelu, na liście zasobów (**Dane → Zasoby**).
+   Link można otwierać wiele razy, także z kilku przeglądarek naraz.
 2. Otwórz „Wykaz AED – Urząd Miasta Legionowo”. Pod polem wykazu chronionych danych (DGA)
    jest nasze pole **„Zawiera wykaz defibrylatorów AED: Tak”** z opisem mechanizmu.
    Kliknij **„Zapisz i kontynuuj edycję”**: panel podziękuje dostawcy
