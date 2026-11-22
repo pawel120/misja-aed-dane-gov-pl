@@ -1,7 +1,7 @@
 id_urzadzenia,regon_dysponenta,nazwa_dysponenta,nazwa_miejsca,cecha_ulicy,nazwa_ulicy,nr_budynku,nr_lokalu,kod_pocztowy,miejscowosc,kod_terc,kod_simc,szerokosc_geograficzna,dlugosc_geograficzna,polozenie,opis_lokalizacji,dostep_24h,godziny_pn,godziny_wt,godziny_sr,godziny_cz,godziny_pt,godziny_so,godziny_nd,dostep_publiczny,urzadzenie_zamkniete,model_urzadzenia,data_ostatniego_przegladu,data_waznosci_elektrod,data_waznosci_baterii,telefon_kontaktowy,data_aktualizacji
 PRZ-744,X,X,Defibrylator (AED 9485) w ADM Centrum,ulica,Juliusza Słowackiego,12,X,37-700,Przemyśl,X,X,49.781210,22.775094,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
 PRZ-745,X,X,Defibrylator (AED 9556) w I Liecum Ogólnokształcącym w Przemyślu,ulica,Juliusza Słowackiego,21,X,37-700,Przemyśl,X,X,49.780639,22.777108,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
-PRZ-746,X,X,Defibrylator (AED 9579) w Szkole Podstawowej Nr 6 w Przemyślu,ulica,Generała Mieczysława Boruty Spiechowicza,1,X,37-700,Przemyśl,X,X,49.797269,22.758209,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,+48166779500,2024-11-06
+PRZ-746,X,X,Defibrylator (AED 9579) w Szkole Podstawowej Nr 6 w Przemyślu,ulica,Generała Mieczysława Boruty Spiechowicza,1,X,37-700,Przemyśl,X,X,49.797269,22.758209,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
 PRZ-747,X,X,Defibrylator (AED 7664) ul. Zamkowa 1,ulica,Zamkowa,1,X,37-700,Przemyśl,X,X,49.780647,22.768454,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
 PRZ-748,X,X,Defibrylator (AED 9469) Muzeum Dzwonów i Fajek,ulica,Władycze,3,X,37-700,Przemyśl,X,X,49.781852,22.773641,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06
 PRZ-749,X,X,Defibrylator (AED 9471) Hala Sportowa POSiR,ulica,Adama Mickiewicza,30,X,37-700,Przemyśl,X,X,49.782322,22.783786,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,2024-11-06

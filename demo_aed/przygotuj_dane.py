@@ -39,6 +39,7 @@ def main(zrodlo):
             for dzien in AED_WEEKDAY_COLUMNS:
                 wiersz[dzien] = "24h" if rekord.get("dostep_24h") == "TAK" else "X"
             wiersz["polozenie"] = "X"
+            wiersz["telefon_kontaktowy"] = "X"  # bez numerów telefonów w danych demo
             wiersze.append(wiersz)
         zapisz(WYJSCIE / f"wykaz_aed_{nazwa}.csv", wiersze)
         print(nazwa, len(wiersze))
