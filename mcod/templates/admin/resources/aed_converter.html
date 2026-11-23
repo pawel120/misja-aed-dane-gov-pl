@@ -1,0 +1,108 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Konwerter wykazu AED{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans "Home" %}</a>
+    &rsaquo; <a href="{% url 'admin:resources_resource_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; Konwerter wykazu AED
+</div>
+{% endblock %}
+
+{% block content_title %}<h1>Konwerter wykazu AED</h1>{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px;">
+    <p>
+        Masz już listę defibrylatorów, ale w innym układzie niż wzorzec (np. plik miasta z dane.gov.pl,
+        eksport z mapy albo arkusz)? Wgraj ją tutaj. Portal dopasuje kolumny do wzorcowego zakresu danych,
+        poprawi to, co da się poprawić automatycznie, i pokaże, czego brakuje. Plik wynikowy dodaj jako zasób
+        z zaznaczonym polem „Zawiera wykaz defibrylatorów AED”.
+    </p>
+    <p style="color:#666;">
+        Konwerter niczego nie zapisuje w portalu. Nie zgaduje danych, których nie ma w pliku (REGON, godziny,
+        daty przeglądów), i nie wyznacza współrzędnych z adresu: punkt bez współrzędnych nie trafi na mapę.
+    </p>
+
+    <form method="post" enctype="multipart/form-data" style="margin: 18px 0;">
+        {% csrf_token %}
+        <label for="aed-file"><strong>Plik z wykazem (csv, xls, xlsx, do 5 MB)</strong></label><br>
+        <input id="aed-file" type="file" name="file" accept=".csv,.xls,.xlsx" required style="margin: 8px 0;">
+        <input type="submit" class="btn btn-info" value="Przerób na wzorzec">
+    </form>
+
+    {% if error %}
+        <ul class="errorlist"><li>{{ error }}</li></ul>
+    {% endif %}
+
+    {% if file_name %}
+        <h2>Wynik dla pliku „{{ file_name }}”</h2>
+
+        <div style="display:flex; gap:24px; flex-wrap:wrap; margin: 12px 0 20px;">
+            <div style="border:2px solid #2e7d32; padding:12px 18px;">
+                <div style="font-size:28px; font-weight:bold; color:#2e7d32;">{{ accepted_count }}</div>
+                <div>wierszy gotowych do publikacji</div>
+            </div>
+            <div style="border:2px solid {% if rejected_count %}#c62828{% else %}#999{% endif %}; padding:12px 18px;">
+                <div style="font-size:28px; font-weight:bold; color:{% if rejected_count %}#c62828{% else %}#999{% endif %};">{{ rejected_count }}</div>
+                <div>wierszy do poprawienia przez dysponenta</div>
+            </div>
+            {% if residents %}
+            <div style="border:2px solid #D5233F; padding:12px 18px;">
+                <div style="font-size:28px; font-weight:bold; color:#D5233F;">{{ residents }}</div>
+                <div>mieszkańców w promieniu 200 m od tych AED</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <p>
+            <a class="btn btn-success" download="{{ download_name }}"
+               href="data:text/csv;charset=utf-8;base64,{{ download_data }}">Pobierz plik we wzorcu (CSV)</a>
+        </p>
+
+        <h3>Co portal zmienił</h3>
+        {% if changes %}
+            <ul>{% for change in changes %}<li>{{ change }}</li>{% endfor %}</ul>
+        {% else %}
+            <p>Nic: plik był już we wzorcowym zakresie danych.</p>
+        {% endif %}
+
+        <h3>Dopasowanie kolumn</h3>
+        <table>
+            <thead><tr><th>Kolumna w Twoim pliku</th><th>Kolumna wzorca</th></tr></thead>
+            <tbody>
+            {% for item in mapping %}
+                <tr><td>{{ item.source }}</td><td><code>{{ item.target }}</code></td></tr>
+            {% empty %}
+                <tr><td colspan="2">Nie rozpoznano żadnej kolumny.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        {% if rejected %}
+            <h3>Wiersze do poprawienia</h3>
+            <ul>
+            {% for issue in rejected %}
+                <li>wiersz {{ issue.row_number }} ({{ issue.device_id }}): {{ issue.reasons|join:"; " }}</li>
+            {% endfor %}
+            {% if rejected_more %}<li>… i {{ rejected_more }} kolejnych</li>{% endif %}
+            </ul>
+        {% endif %}
+
+        <h3>Podgląd (pierwsze wiersze)</h3>
+        <div style="overflow-x:auto;">
+        <table>
+            <thead><tr>{% for column in preview_columns %}<th><code>{{ column }}</code></th>{% endfor %}</tr></thead>
+            <tbody>
+            {% for row in preview_rows %}
+                <tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        <p style="color:#666;">Plik ma {{ rows_total }} wierszy i wszystkie 32 kolumny wzorca.</p>
+    {% endif %}
+</div>
+{% endblock %}

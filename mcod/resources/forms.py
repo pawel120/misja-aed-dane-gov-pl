@@ -12,6 +12,7 @@ from django.contrib.admin.widgets import AdminDateWidget, FilteredSelectMultiple
 from django.contrib.postgres.forms.jsonb import JSONField
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile, UploadedFile
+from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -277,7 +278,9 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
             "Wskazanie TAK dla opublikowanego zasobu oznacza, że zasób jest "
             "aktualnym wykazem defibrylatorów AED tej instytucji. Portal raz na "
             "dobę dołącza go do zbiorczego wykazu AED. Plik (csv, xls, xlsx) musi "
-            "mieć kolumny wzorcowego zakresu danych o AED."
+            "mieć kolumny wzorcowego zakresu danych o AED. Wykaz w innym układzie "
+            "kolumn przerobisz na wzorzec w Konwerterze AED (Zasoby → Konwerter AED, "
+            "adres /resources/resource/aed-konwerter/)."
         ),
         # Przyciski radiowe zamiast CheckboxSelect: przy domyślnym „Nie” zaznaczenie „Tak”
         # nie może zostawić obu wartości (wtedy formularz zapisałby „Nie”).
@@ -468,7 +471,14 @@ class ResourceForm(forms.ModelForm, HighValueDataFormValidatorMixin):
         try:
             result = validate_aed_df(df)
         except MainAEDColumnsError as exc:
-            self.add_error(error_field, str(exc))
+            self.add_error(
+                error_field,
+                format_html(
+                    '{} <a href="{}">Przerób plik na wzorzec w Konwerterze AED</a>.',
+                    str(exc),
+                    reverse("admin:resources_resource_aed_converter"),
+                ),
+            )
             return
         if result.rejected:
             shown = result.rejected[:AED_FORM_MAX_SHOWN_ISSUES]

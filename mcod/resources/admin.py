@@ -35,6 +35,7 @@ from mcod.histories.models import LogEntry
 from mcod.lib.admin_mixins import HistoryMixin, ModelAdmin, SortableStackedInline, TrashMixin
 from mcod.lib.helpers import get_paremeters_from_post
 from mcod.organizations.models import Organization
+from mcod.resources.aed_converter_view import build_aed_converter_context
 from mcod.resources.aed_validation import format_residents
 from mcod.resources.dga_constants import SAVE_CONFIRMATION_FIELD
 from mcod.resources.dga_utils import get_dga_resource_for_institution, save_temp_dga_file
@@ -979,12 +980,35 @@ class ResourceAdmin(HistoryMixin, ModelAdmin):  # MRO matters here for unescape
         urls = super().get_urls()
         custom_urls = [
             path(
+                "aed-konwerter/",
+                self.admin_site.admin_view(self.aed_converter_view),
+                name="resources_resource_aed_converter",
+            ),
+            path(
                 "<path:resource_id>/revalidate/",
                 self.revalidate,
                 name="resource-revalidate",
-            )
+            ),
         ]
         return custom_urls + urls
+
+    def aed_converter_view(self, request: HttpRequest):
+        """
+        Konwerter AED: dostawca wgrywa wykaz w dowolnym układzie kolumn (np. plik
+        miasta z dane.gov.pl), widzi, co portal poprawił i czego brakuje, i pobiera
+        plik we wzorcowym zakresie danych gotowy do dodania jako zasób.
+        """
+        if not (self.has_add_permission(request) or self.has_view_permission(request)):
+            raise PermissionDenied
+        context: Dict[str, Any] = {
+            **self.admin_site.each_context(request),
+            "title": "Konwerter wykazu AED",
+            "opts": self.model._meta,
+        }
+        upload = request.FILES.get("file") if request.method == "POST" else None
+        if upload is not None:
+            context.update(build_aed_converter_context(upload))
+        return TemplateResponse(request, "admin/resources/aed_converter.html", context)
 
     def revalidate(self, request, resource_id, *args, **kwargs):
         if not self.has_change_permission(request):

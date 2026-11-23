@@ -51,6 +51,9 @@ from mcod.resources.aed_constants import (
     MAIN_AED_DUPLICATE_COLUMN,
     MAIN_AED_PROVIDER_COLUMN,
     MAIN_AED_PROVIDER_REGON_COLUMN,
+    MAIN_AED_SOURCE_COLUMN,
+    MAIN_AED_SOURCE_DATE_COLUMN,
+    MAIN_AED_SOURCE_LICENSE_COLUMN,
     MAIN_AED_WARNINGS_COLUMN,
 )
 
@@ -409,6 +412,10 @@ class AEDProviderList:
     df: pd.DataFrame
     # Identyfikator instytucji w portalu: dwie instytucje mogą mieć tę samą nazwę.
     provider_id: Optional[int] = None
+    # Zakres referencyjny źródła: adres zasobu dostawcy, licencja, dane na dzień.
+    source_url: str = ""
+    source_license: str = ""
+    source_date: str = ""
 
     @property
     def provider_key(self) -> str:
@@ -469,6 +476,9 @@ def build_main_aed_df(lists: Iterable[AEDProviderList], today: Optional[datetime
         if result.accepted.empty:
             continue
         frame = result.accepted.copy()
+        frame.insert(0, MAIN_AED_SOURCE_DATE_COLUMN, provider_list.source_date or AED_EMPTY_VALUE)
+        frame.insert(0, MAIN_AED_SOURCE_LICENSE_COLUMN, provider_list.source_license or AED_EMPTY_VALUE)
+        frame.insert(0, MAIN_AED_SOURCE_COLUMN, provider_list.source_url or AED_EMPTY_VALUE)
         frame.insert(0, MAIN_AED_PROVIDER_REGON_COLUMN, provider_list.provider_regon or AED_EMPTY_VALUE)
         frame.insert(0, MAIN_AED_PROVIDER_COLUMN, provider_list.provider_name)
         frame[_PROVIDER_KEY_COLUMN] = provider_list.provider_key

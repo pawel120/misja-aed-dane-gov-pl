@@ -102,6 +102,14 @@ for plik, nazwa, typ, regon, licencja in DOSTAWCY:
         dataset.categories.set([category])
         print(f"Utworzono zbiór {nazwa}: {dataset.title}")
 
+    # Licencja zbioru jak u źródła: trafia do kolumny „Licencja źródła” raportu zbiorczego.
+    # Portal liczy licencję z warunków zbioru: bez warunków to CC0, z warunkiem CC BY 4.0.
+    cc_by = licencja.startswith("CC BY")
+    if bool(dataset.license_condition_default_cc40) != cc_by:
+        dataset.license_condition_default_cc40 = cc_by
+        dataset.save()
+        print(f"Ustawiono licencję {licencja}: {nazwa}")
+
     if Resource.raw.filter(dataset=dataset, contains_aed_list=True).exists():
         continue
     resource = Resource.objects.create(

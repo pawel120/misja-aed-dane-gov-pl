@@ -8,7 +8,8 @@ mechanizm „Wykaz AED”, wzorowany na istniejącym w portalu wykazie chroniony
 2. portal sprawdza plik **walidacjami AED** i od razu pokazuje dostawcy, które wiersze poprawić;
 3. raz na dobę portal skleja wszystkie poprawne wykazy w zbiór
    **„Wykaz defibrylatorów AED – raport zbiorczy”** na profilu Ministerstwa Cyfryzacji,
-   z kolumnami „Nazwa dostawcy”, „Możliwy duplikat”, „Ostrzeżenia walidacji”;
+   z kolumnami „Nazwa dostawcy”, „REGON dostawcy”, zakresem referencyjnym źródła („Źródło danych (zasób dostawcy)”,
+   „Licencja źródła”, „Dane źródła na dzień”), „Możliwy duplikat”, „Ostrzeżenia walidacji”;
 4. raport ma od razu ustawioną **mapę portalu** (szerokość, długość, nazwa miejsca).
 
 ## Klikalny prototyp
@@ -23,9 +24,10 @@ mechanizm „Wykaz AED”, wzorowany na istniejącym w portalu wykazie chroniony
 | API portalu: zbiór raportu zbiorczego (Ministerstwo Cyfryzacji) | https://api.145-239-30-81.sslip.io/1.4/datasets/6 |
 | API portalu: punkty mapy raportu zbiorczego | https://api.145-239-30-81.sslip.io/1.4/resources/8/geo (zasób raportu jest stały; codzienne przeliczenie podmienia tylko jego plik) |
 | API portalu: wiersze raportu z wyszukiwaniem | https://api.145-239-30-81.sslip.io/1.4/resources/8/data?q=Krosno |
-| **Panel bez logowania** | https://admin.145-239-30-81.sslip.io/aed-demo/wejdz/YKp08CmJ4xh2HM23agSja420mZ0VG8jI/ ; działa wielokrotnie, do 22.11.2026, 23:59; wpuszcza na konto jury bez wpisywania hasła |
+| **Panel bez logowania** | link jury z formularza zgłoszeniowego; działał do 22.11.2026, 23:59 |
+| Konwerter AED (panel) | `/resources/resource/aed-konwerter/` (dodany 23.11.2026, po konkursie) |
 
-To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
+To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl. **Serwer testowy działał podczas HackNation i jest już wyłączony.** Ten sam prototyp uruchomisz lokalnie według `demo_aed/README.md`.
 
 ## Kroki dla jury (ok. 5 minut)
 
@@ -50,11 +52,18 @@ To środowisko testowe (pasek u góry każdej strony), nie serwis dane.gov.pl.
 6. Otwórz w przeglądarce API `/1.4/resources/8/geo` – punkty mapy z raportu zbiorczego.
 7. (Opcjonalnie) Dodaj zasób z plikiem `demo_aed/dane/wykaz_aed_testowy_z_bledami.csv`
    i zaznacz „Contains AED list: Tak” – formularz nie zapisze pliku i wypisze błędy w wierszach.
+8. **Konwerter:** otwórz `/resources/resource/aed-konwerter/` i wgraj wykaz miasta w jego oryginalnym układzie
+   (np. wykaz Marek z dane.gov.pl: cały wiersz w cudzysłowie, zamienione współrzędne, adres w jednej komórce).
+   Portal pokaże dopasowanie kolumn, listę zmian, wiersze do poprawy i liczbę mieszkańców w promieniu 200 m,
+   a plik we wzorcu da do pobrania. Wynik dodaj jako zasób jak w kroku 7.
 
 ## Gdzie sprawdzić każde wymaganie z treści zadania
 
-| Wymaganie (pkt 4 i 5 treści) | Gdzie | Jak sprawdzić |
+| Wymaganie (pkt 2, 4 i 5 treści) | Gdzie | Jak sprawdzić |
 |---|---|---|
+| „Zbierz dane z wielu rozproszonych źródeł” (pkt 2) | `mcod/resources/aed_convert.py` (konwerter), `aed_converter_view.py`; demo na wykazach Legionowa, Krosna, Przemyśla i Warszawy z dane.gov.pl | krok 8 |
+| „…ze wskazaniem ich referencyjnego zakresu” (pkt 2) | kolumny źródła w raporcie zbiorczym: `aed_constants.MAIN_AED_SOURCE_COLUMNS`, `aed_utils.describe_aed_source` | krok 5: kolumny „Źródło danych (zasób dostawcy)”, „Licencja źródła”, „Dane źródła na dzień” |
+| „Pomóż zachęcić dysponentów do dzielenia się danymi” (pkt 2) | podziękowanie z liczbą mieszkańców (`admin.py`, `aed_validation.PopulationGrid`); kampania w `kampania/` | krok 2 |
 | Integracja informacji od wielu dysponentów w jednym zbiorze | `mcod/resources/aed_utils.py`, `aed_validation.py` (`build_main_aed_df`) | krok 4–5 |
 | Zgodność z zasadami działania dane.gov.pl | zmiany w kodzie portalu: `git diff f90a02f` (pierwszy commit = czysty kod portalu) | pole w panelu (krok 2), raport jako zwykły zasób portalu, mapa portalu |
 | Wzorcowy zakres danych (xlsx) | `wzorzec/WYKAZ_AED_-_dostawca_XYZ.xlsx` (32 kolumny, 2 przykładowe wiersze) i `wzorzec/opis_kolumn_wykazu_AED.xlsx`; te same kolumny w kodzie: `mcod/resources/aed_constants.py` | test `TestFilesFromRepository` sprawdza, że wzorzec ma kolumny z kodu i przechodzi walidacje |
@@ -127,13 +136,14 @@ a komunikaty formularza idą przez tłumaczenia portalu, jak w wykazie DGA.
 
 ## Testy
 
-Testy modułu AED (171 przechodzi, bez bazy danych): `mcod/resources/tests/test_aed_validation.py`, `test_aed_files.py`, `test_aed_forms.py`, `test_aed_residents.py`, `test_aed_demo_login.py` i `mcod/harvester/tests/test_aed_harvester.py`.
+Testy modułu AED (182 przechodzą, bez bazy danych): `mcod/resources/tests/test_aed_validation.py`, `test_aed_files.py`, `test_aed_forms.py`, `test_aed_residents.py`, `test_aed_demo_login.py`, `test_aed_convert.py`, `test_aed_sources.py` i `mcod/harvester/tests/test_aed_harvester.py`.
 Obejmują pliki z repozytorium (wzorzec, dane demo), pliki zapisane przez Excel, CSV z różnych programów
-i kodowań, wartości skrajne, raport 20 000 AED oraz walidację danych samego portalu (goodtables), którą zasób
-musi przejść, żeby trafić do raportu.
+i kodowań, wartości skrajne, raport 20 000 AED, walidację danych samego portalu (goodtables), którą zasób
+musi przejść, żeby trafić do raportu, konwerter na fragmentach prawdziwych wykazów Marek i Krosna
+oraz zakres referencyjny źródła w raporcie.
 
 ```
-python -m pytest mcod/resources/tests/test_aed_validation.py mcod/resources/tests/test_aed_files.py mcod/resources/tests/test_aed_forms.py mcod/resources/tests/test_aed_residents.py mcod/resources/tests/test_aed_demo_login.py mcod/harvester/tests/test_aed_harvester.py --noconftest -o addopts=""
+python -m pytest mcod/resources/tests/test_aed_validation.py mcod/resources/tests/test_aed_files.py mcod/resources/tests/test_aed_forms.py mcod/resources/tests/test_aed_residents.py mcod/resources/tests/test_aed_demo_login.py mcod/resources/tests/test_aed_convert.py mcod/resources/tests/test_aed_sources.py mcod/harvester/tests/test_aed_harvester.py --noconftest -o addopts=""
 ```
 (w kontenerze aplikacji portalu, z zainstalowanym `pytest` i `pytest-django`)
 

@@ -123,8 +123,35 @@ def collect_aed_provider_lists(resources: QuerySet) -> List[AEDProviderList]:
         if df is None:
             continue
         organization = resource.institution
-        lists.append(AEDProviderList(organization.title, organization.regon or "", df, provider_id=organization.pk))
+        source_url, source_license, source_date = describe_aed_source(resource)
+        lists.append(
+            AEDProviderList(
+                organization.title,
+                organization.regon or "",
+                df,
+                provider_id=organization.pk,
+                source_url=source_url,
+                source_license=source_license,
+                source_date=source_date,
+            )
+        )
     return lists
+
+
+def describe_aed_source(resource: "Resource") -> Tuple[str, str, str]:  # noqa: F821
+    """Zakres referencyjny źródła z metadanych zasobu: adres w portalu, licencja zbioru, dane na dzień."""
+    try:
+        url = resource.frontend_absolute_url or ""
+    except Exception:
+        url = ""
+    try:
+        license_name = resource.dataset.license_name or ""
+    except Exception:
+        license_name = ""
+    data_date = getattr(resource, "data_date", None)
+    if not data_date and getattr(resource, "modified", None):
+        data_date = resource.modified.date()
+    return url, license_name, data_date.isoformat() if data_date else ""
 
 
 def get_main_aed_path() -> Path:

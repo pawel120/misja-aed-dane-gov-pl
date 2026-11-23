@@ -101,6 +101,17 @@ ALLOWED_AED_INSTITUTIONS: List[str] = ["local", "state", "private", "other"]
 
 MAIN_AED_PROVIDER_COLUMN = "Nazwa dostawcy"
 MAIN_AED_PROVIDER_REGON_COLUMN = "REGON dostawcy"
+# Zakres referencyjny źródła (treść zadania: „dane z wielu rozproszonych źródeł
+# ze wskazaniem ich referencyjnego zakresu”). Portal wypełnia te kolumny sam
+# z metadanych zasobu dostawcy, więc dostawca nic nie dopisuje do pliku.
+MAIN_AED_SOURCE_COLUMN = "Źródło danych (zasób dostawcy)"
+MAIN_AED_SOURCE_LICENSE_COLUMN = "Licencja źródła"
+MAIN_AED_SOURCE_DATE_COLUMN = "Dane źródła na dzień"
+MAIN_AED_SOURCE_COLUMNS: List[str] = [
+    MAIN_AED_SOURCE_COLUMN,
+    MAIN_AED_SOURCE_LICENSE_COLUMN,
+    MAIN_AED_SOURCE_DATE_COLUMN,
+]
 MAIN_AED_DUPLICATE_COLUMN = "Możliwy duplikat"
 MAIN_AED_WARNINGS_COLUMN = "Ostrzeżenia walidacji"
 
@@ -108,6 +119,7 @@ MAIN_AED_COLUMNS: List[str] = [
     "Lp.",
     MAIN_AED_PROVIDER_COLUMN,
     MAIN_AED_PROVIDER_REGON_COLUMN,
+    *MAIN_AED_SOURCE_COLUMNS,
     *AED_COLUMNS,
     MAIN_AED_DUPLICATE_COLUMN,
     MAIN_AED_WARNINGS_COLUMN,
